@@ -1,0 +1,77 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource/dm-mono/400.css';
+@import '@fontsource/dm-mono/500.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter Variable', 'Inter', sans-serif;
+  background: #0f1117;
+  color: #e8eaf0;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #181c27;
+}
+::-webkit-scrollbar-thumb {
+  background: #252b3b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Form inputs */
+input[type='text'],
+input[type='date'],
+textarea {
+  background: #0f1117;
+  border: 1px solid #252b3b;
+  border-radius: 6px;
+  color: #e8eaf0;
+  padding: 8px 12px;
+  font-family: 'Inter Variable', 'Inter', sans-serif;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input[type='text']:focus,
+input[type='date']:focus,
+textarea:focus {
+  border-color: #8b5cf6;
+}
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}

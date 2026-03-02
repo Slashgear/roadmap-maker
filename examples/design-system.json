@@ -1,0 +1,314 @@
+{
+  "id": "ex_design_system",
+  "slug": "design-system-v2",
+  "title": "Design System 2.0",
+  "subtitle": "May → Nov 2026",
+  "startDate": "2026-05-01",
+  "endDate": "2026-11-30",
+  "sections": [
+    {
+      "id": "ex_ds_milestones",
+      "roadmapId": "ex_design_system",
+      "label": "🏁 Milestones",
+      "color": "orange",
+      "position": 0,
+      "tasks": [
+        {
+          "id": "ex_ds_m1",
+          "sectionId": "ex_ds_milestones",
+          "label": "Kickoff & team alignment",
+          "startDate": "2026-05-04",
+          "endDate": "2026-05-04",
+          "status": "confirmed",
+          "type": "milestone",
+          "position": 0
+        },
+        {
+          "id": "ex_ds_m2",
+          "sectionId": "ex_ds_milestones",
+          "label": "Alpha — internal teams",
+          "startDate": "2026-07-14",
+          "endDate": "2026-07-14",
+          "status": "confirmed",
+          "type": "milestone",
+          "position": 1
+        },
+        {
+          "id": "ex_ds_m3",
+          "sectionId": "ex_ds_milestones",
+          "label": "Beta — all products",
+          "startDate": "2026-09-07",
+          "endDate": "2026-09-07",
+          "status": "confirmed",
+          "type": "milestone",
+          "position": 2
+        },
+        {
+          "id": "ex_ds_m4",
+          "sectionId": "ex_ds_milestones",
+          "label": "v1 sunset deadline",
+          "startDate": "2026-10-30",
+          "endDate": "2026-10-30",
+          "status": "critical",
+          "type": "milestone",
+          "note": "Hard deadline — v1 will be archived. All teams must complete migration.",
+          "position": 3
+        },
+        {
+          "id": "ex_ds_m5",
+          "sectionId": "ex_ds_milestones",
+          "label": "Public launch v2.0",
+          "startDate": "2026-11-16",
+          "endDate": "2026-11-16",
+          "status": "confirmed",
+          "type": "milestone",
+          "position": 4
+        },
+        {
+          "id": "ex_ds_m6",
+          "sectionId": "ex_ds_milestones",
+          "label": "Design token open-source release (TBD)",
+          "startDate": "2026-11-23",
+          "endDate": "2026-11-23",
+          "status": "pending",
+          "type": "milestone",
+          "position": 5
+        }
+      ]
+    },
+    {
+      "id": "ex_ds_framing",
+      "roadmapId": "ex_design_system",
+      "label": "🔍 Audit & Foundations",
+      "color": "purple",
+      "position": 1,
+      "tasks": [
+        {
+          "id": "ex_ds_f1",
+          "sectionId": "ex_ds_framing",
+          "label": "Audit v1 — component inventory",
+          "startDate": "2026-05-04",
+          "endDate": "2026-05-18",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Document all 87 components: usage stats, known issues, deprecation candidates.",
+          "position": 0
+        },
+        {
+          "id": "ex_ds_f2",
+          "sectionId": "ex_ds_framing",
+          "label": "Design token architecture",
+          "startDate": "2026-05-11",
+          "endDate": "2026-06-01",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Align on color, spacing, typography and motion token taxonomy before any component work starts.",
+          "position": 1
+        },
+        {
+          "id": "ex_ds_f3",
+          "sectionId": "ex_ds_framing",
+          "label": "Accessibility audit (WCAG 2.2 AA)",
+          "startDate": "2026-05-18",
+          "endDate": "2026-06-08",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 2
+        },
+        {
+          "id": "ex_ds_f4",
+          "sectionId": "ex_ds_framing",
+          "label": "Migration guide — v1 → v2",
+          "startDate": "2026-08-03",
+          "endDate": "2026-09-07",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Codemods + written guide. Must cover all breaking changes.",
+          "position": 3
+        },
+        {
+          "id": "ex_ds_f5",
+          "sectionId": "ex_ds_framing",
+          "label": "Third-party integration guide (TBD)",
+          "startDate": "2026-10-05",
+          "endDate": "2026-11-02",
+          "status": "pending",
+          "type": "bar",
+          "position": 4
+        }
+      ]
+    },
+    {
+      "id": "ex_ds_design",
+      "roadmapId": "ex_design_system",
+      "label": "🎨 Design",
+      "color": "cyan",
+      "position": 2,
+      "tasks": [
+        {
+          "id": "ex_ds_d1",
+          "sectionId": "ex_ds_design",
+          "label": "New visual language & guidelines",
+          "startDate": "2026-05-18",
+          "endDate": "2026-06-15",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 0
+        },
+        {
+          "id": "ex_ds_d2",
+          "sectionId": "ex_ds_design",
+          "label": "Core components — Figma kit",
+          "startDate": "2026-06-01",
+          "endDate": "2026-07-13",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Button, Input, Select, Checkbox, Radio, Modal, Toast, Table, Badge.",
+          "position": 1
+        },
+        {
+          "id": "ex_ds_d3",
+          "sectionId": "ex_ds_design",
+          "label": "Navigation & layout patterns",
+          "startDate": "2026-07-13",
+          "endDate": "2026-08-10",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 2
+        },
+        {
+          "id": "ex_ds_d4",
+          "sectionId": "ex_ds_design",
+          "label": "Data viz components — design",
+          "startDate": "2026-08-10",
+          "endDate": "2026-09-07",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 3
+        },
+        {
+          "id": "ex_ds_d5",
+          "sectionId": "ex_ds_design",
+          "label": "Dark mode tokens & variants",
+          "startDate": "2026-09-07",
+          "endDate": "2026-10-05",
+          "status": "pending",
+          "type": "bar",
+          "note": "Scope and feasibility to be confirmed after beta feedback.",
+          "position": 4
+        }
+      ]
+    },
+    {
+      "id": "ex_ds_tech",
+      "roadmapId": "ex_design_system",
+      "label": "⚙️ Engineering",
+      "color": "green",
+      "position": 3,
+      "tasks": [
+        {
+          "id": "ex_ds_t1",
+          "sectionId": "ex_ds_tech",
+          "label": "Monorepo & build tooling setup",
+          "startDate": "2026-05-04",
+          "endDate": "2026-05-25",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Turborepo + tsup. Publish to private registry first.",
+          "position": 0
+        },
+        {
+          "id": "ex_ds_t2",
+          "sectionId": "ex_ds_tech",
+          "label": "Core components — implementation",
+          "startDate": "2026-06-08",
+          "endDate": "2026-07-13",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 1
+        },
+        {
+          "id": "ex_ds_t3",
+          "sectionId": "ex_ds_tech",
+          "label": "Storybook + visual regression CI",
+          "startDate": "2026-06-22",
+          "endDate": "2026-07-20",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 2
+        },
+        {
+          "id": "ex_ds_t4",
+          "sectionId": "ex_ds_tech",
+          "label": "Automated a11y testing (axe-core)",
+          "startDate": "2026-07-06",
+          "endDate": "2026-07-27",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 3
+        },
+        {
+          "id": "ex_ds_t5",
+          "sectionId": "ex_ds_tech",
+          "label": "Navigation & layout — implementation",
+          "startDate": "2026-07-27",
+          "endDate": "2026-08-24",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 4
+        },
+        {
+          "id": "ex_ds_t6",
+          "sectionId": "ex_ds_tech",
+          "label": "Codemod: v1 → v2 auto-migration",
+          "startDate": "2026-08-10",
+          "endDate": "2026-09-07",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "AST-based transforms for renamed props and removed components.",
+          "position": 5
+        },
+        {
+          "id": "ex_ds_t7",
+          "sectionId": "ex_ds_tech",
+          "label": "Documentation site (Starlight)",
+          "startDate": "2026-08-24",
+          "endDate": "2026-10-05",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 6
+        },
+        {
+          "id": "ex_ds_t8",
+          "sectionId": "ex_ds_tech",
+          "label": "Data viz — implementation",
+          "startDate": "2026-09-07",
+          "endDate": "2026-10-12",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 7
+        },
+        {
+          "id": "ex_ds_t9",
+          "sectionId": "ex_ds_tech",
+          "label": "Performance budget & bundle audit",
+          "startDate": "2026-10-05",
+          "endDate": "2026-10-19",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 8
+        },
+        {
+          "id": "ex_ds_t10",
+          "sectionId": "ex_ds_tech",
+          "label": "Dark mode — implementation",
+          "startDate": "2026-10-12",
+          "endDate": "2026-11-09",
+          "status": "pending",
+          "type": "bar",
+          "position": 9
+        }
+      ]
+    }
+  ]
+}

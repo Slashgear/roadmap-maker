@@ -1,0 +1,320 @@
+{
+  "id": "ex_mobile",
+  "slug": "mobile-app",
+  "title": "Mobile App v1.0",
+  "subtitle": "Apr → Oct 2026",
+  "startDate": "2026-04-01",
+  "endDate": "2026-10-31",
+  "sections": [
+    {
+      "id": "ex_m_jalons",
+      "roadmapId": "ex_mobile",
+      "label": "🏁 Milestones",
+      "color": "orange",
+      "position": 0,
+      "tasks": [
+        {
+          "id": "ex_mj1",
+          "sectionId": "ex_m_jalons",
+          "label": "Kick-off & alignment",
+          "startDate": "2026-04-06",
+          "endDate": "2026-04-06",
+          "status": "confirmed",
+          "type": "milestone",
+          "position": 0
+        },
+        {
+          "id": "ex_mj2",
+          "sectionId": "ex_m_jalons",
+          "label": "Internal alpha",
+          "startDate": "2026-06-22",
+          "endDate": "2026-06-22",
+          "status": "confirmed",
+          "type": "milestone",
+          "position": 1
+        },
+        {
+          "id": "ex_mj3",
+          "sectionId": "ex_m_jalons",
+          "label": "Beta — TestFlight / Play Console",
+          "startDate": "2026-08-10",
+          "endDate": "2026-08-10",
+          "status": "critical",
+          "type": "milestone",
+          "note": "Goal: 200 beta testers. Prepare store assets (screenshots, descriptions).",
+          "position": 2
+        },
+        {
+          "id": "ex_mj4",
+          "sectionId": "ex_m_jalons",
+          "label": "App Store / Play Store submission",
+          "startDate": "2026-09-21",
+          "endDate": "2026-09-21",
+          "status": "critical",
+          "type": "milestone",
+          "position": 3
+        },
+        {
+          "id": "ex_mj5",
+          "sectionId": "ex_m_jalons",
+          "label": "Public launch 🚀",
+          "startDate": "2026-10-05",
+          "endDate": "2026-10-05",
+          "status": "critical",
+          "type": "milestone",
+          "position": 4
+        },
+        {
+          "id": "ex_mj6",
+          "sectionId": "ex_m_jalons",
+          "label": "v1.1 — date TBC",
+          "startDate": "2026-10-26",
+          "endDate": "2026-10-26",
+          "status": "pending",
+          "type": "milestone",
+          "position": 5
+        }
+      ]
+    },
+    {
+      "id": "ex_m_framing",
+      "roadmapId": "ex_mobile",
+      "label": "🗺️ Discovery & Specs",
+      "color": "purple",
+      "position": 1,
+      "tasks": [
+        {
+          "id": "ex_mc1",
+          "sectionId": "ex_m_framing",
+          "label": "Benchmarks & competitive analysis",
+          "startDate": "2026-04-06",
+          "endDate": "2026-04-17",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 0
+        },
+        {
+          "id": "ex_mc2",
+          "sectionId": "ex_m_framing",
+          "label": "User stories — MVP",
+          "startDate": "2026-04-13",
+          "endDate": "2026-04-30",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 1
+        },
+        {
+          "id": "ex_mc3",
+          "sectionId": "ex_m_framing",
+          "label": "Stack decision — React Native vs Flutter",
+          "startDate": "2026-04-13",
+          "endDate": "2026-04-24",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Criteria: performance, team skills, native API access (camera, push notifications, biometrics).",
+          "position": 2
+        },
+        {
+          "id": "ex_mc4",
+          "sectionId": "ex_m_framing",
+          "label": "Detailed specs v1",
+          "startDate": "2026-04-27",
+          "endDate": "2026-05-15",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 3
+        },
+        {
+          "id": "ex_mc5",
+          "sectionId": "ex_m_framing",
+          "label": "Specs v1.1 (post-launch)",
+          "startDate": "2026-09-14",
+          "endDate": "2026-10-16",
+          "status": "pending",
+          "type": "bar",
+          "position": 4
+        }
+      ]
+    },
+    {
+      "id": "ex_m_design",
+      "roadmapId": "ex_mobile",
+      "label": "🎨 Design & UX",
+      "color": "cyan",
+      "position": 2,
+      "tasks": [
+        {
+          "id": "ex_md1",
+          "sectionId": "ex_m_design",
+          "label": "UX research — usability testing",
+          "startDate": "2026-04-20",
+          "endDate": "2026-05-08",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 0
+        },
+        {
+          "id": "ex_md2",
+          "sectionId": "ex_m_design",
+          "label": "Wireframes & user flows",
+          "startDate": "2026-05-04",
+          "endDate": "2026-05-22",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 1
+        },
+        {
+          "id": "ex_md3",
+          "sectionId": "ex_m_design",
+          "label": "Mobile design system",
+          "startDate": "2026-05-11",
+          "endDate": "2026-05-29",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Follow HIG (iOS) and Material 3 (Android) guidelines. Use shared design tokens.",
+          "position": 2
+        },
+        {
+          "id": "ex_md4",
+          "sectionId": "ex_m_design",
+          "label": "High-fidelity mockups",
+          "startDate": "2026-05-25",
+          "endDate": "2026-06-26",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 3
+        },
+        {
+          "id": "ex_md5",
+          "sectionId": "ex_m_design",
+          "label": "Interactive prototype",
+          "startDate": "2026-06-15",
+          "endDate": "2026-06-30",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 4
+        },
+        {
+          "id": "ex_md6",
+          "sectionId": "ex_m_design",
+          "label": "Store assets (screenshots, icon)",
+          "startDate": "2026-08-17",
+          "endDate": "2026-09-04",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 5
+        },
+        {
+          "id": "ex_md7",
+          "sectionId": "ex_m_design",
+          "label": "Post-beta design iterations",
+          "startDate": "2026-08-24",
+          "endDate": "2026-09-18",
+          "status": "pending",
+          "type": "bar",
+          "position": 6
+        }
+      ]
+    },
+    {
+      "id": "ex_m_tech",
+      "roadmapId": "ex_mobile",
+      "label": "⚙️ Tech",
+      "color": "green",
+      "position": 3,
+      "tasks": [
+        {
+          "id": "ex_mt1",
+          "sectionId": "ex_m_tech",
+          "label": "Project setup & CI/CD",
+          "startDate": "2026-04-27",
+          "endDate": "2026-05-08",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 0
+        },
+        {
+          "id": "ex_mt2",
+          "sectionId": "ex_m_tech",
+          "label": "Auth — Sign in / Sign up / SSO",
+          "startDate": "2026-05-11",
+          "endDate": "2026-05-29",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 1
+        },
+        {
+          "id": "ex_mt3",
+          "sectionId": "ex_m_tech",
+          "label": "Core features — Sprint 1",
+          "startDate": "2026-05-25",
+          "endDate": "2026-06-12",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 2
+        },
+        {
+          "id": "ex_mt4",
+          "sectionId": "ex_m_tech",
+          "label": "Core features — Sprint 2",
+          "startDate": "2026-06-08",
+          "endDate": "2026-06-26",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 3
+        },
+        {
+          "id": "ex_mt5",
+          "sectionId": "ex_m_tech",
+          "label": "Push notifications",
+          "startDate": "2026-06-22",
+          "endDate": "2026-07-10",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 4
+        },
+        {
+          "id": "ex_mt6",
+          "sectionId": "ex_m_tech",
+          "label": "Offline mode & sync",
+          "startDate": "2026-07-06",
+          "endDate": "2026-07-31",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Optimistic updates + sync queue strategy. Test under flaky network conditions.",
+          "position": 5
+        },
+        {
+          "id": "ex_mt7",
+          "sectionId": "ex_m_tech",
+          "label": "QA & end-to-end tests",
+          "startDate": "2026-07-20",
+          "endDate": "2026-08-14",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 6
+        },
+        {
+          "id": "ex_mt8",
+          "sectionId": "ex_m_tech",
+          "label": "Beta bug fixes",
+          "startDate": "2026-08-10",
+          "endDate": "2026-09-11",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 7
+        },
+        {
+          "id": "ex_mt9",
+          "sectionId": "ex_m_tech",
+          "label": "v1.1 integrations (to be prioritized)",
+          "startDate": "2026-10-05",
+          "endDate": "2026-10-30",
+          "status": "pending",
+          "type": "bar",
+          "position": 8
+        }
+      ]
+    }
+  ]
+}

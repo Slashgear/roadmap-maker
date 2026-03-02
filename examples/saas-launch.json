@@ -1,0 +1,291 @@
+{
+  "id": "ex_saas",
+  "slug": "saas-launch",
+  "title": "SaaS Launch",
+  "subtitle": "Mar → Aug 2026",
+  "startDate": "2026-03-01",
+  "endDate": "2026-08-31",
+  "sections": [
+    {
+      "id": "ex_s_jalons",
+      "roadmapId": "ex_saas",
+      "label": "🏁 Milestones",
+      "color": "orange",
+      "position": 0,
+      "tasks": [
+        {
+          "id": "ex_sj1",
+          "sectionId": "ex_s_jalons",
+          "label": "Team kick-off",
+          "startDate": "2026-03-02",
+          "endDate": "2026-03-02",
+          "status": "confirmed",
+          "type": "milestone",
+          "position": 0
+        },
+        {
+          "id": "ex_sj2",
+          "sectionId": "ex_s_jalons",
+          "label": "Closed beta — 20 users",
+          "startDate": "2026-05-11",
+          "endDate": "2026-05-11",
+          "status": "critical",
+          "type": "milestone",
+          "position": 1
+        },
+        {
+          "id": "ex_sj3",
+          "sectionId": "ex_s_jalons",
+          "label": "Product Hunt launch",
+          "startDate": "2026-06-15",
+          "endDate": "2026-06-15",
+          "status": "critical",
+          "type": "milestone",
+          "note": "Target Tuesday or Wednesday for best PH traffic.",
+          "position": 2
+        },
+        {
+          "id": "ex_sj4",
+          "sectionId": "ex_s_jalons",
+          "label": "SaaStr conference (date TBD)",
+          "startDate": "2026-07-20",
+          "endDate": "2026-07-22",
+          "status": "pending",
+          "type": "milestone",
+          "position": 3
+        },
+        {
+          "id": "ex_sj5",
+          "sectionId": "ex_s_jalons",
+          "label": "GA — Open to public",
+          "startDate": "2026-08-03",
+          "endDate": "2026-08-03",
+          "status": "critical",
+          "type": "milestone",
+          "position": 4
+        }
+      ]
+    },
+    {
+      "id": "ex_s_framing",
+      "roadmapId": "ex_saas",
+      "label": "🗺️ Discovery & Framing",
+      "color": "purple",
+      "position": 1,
+      "tasks": [
+        {
+          "id": "ex_sc1",
+          "sectionId": "ex_s_framing",
+          "label": "User research — 15 interviews",
+          "startDate": "2026-03-02",
+          "endDate": "2026-03-20",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Focus on current workflow pain points. Recruit via LinkedIn + personal network.",
+          "position": 0
+        },
+        {
+          "id": "ex_sc2",
+          "sectionId": "ex_s_framing",
+          "label": "MVP scope definition — v1",
+          "startDate": "2026-03-16",
+          "endDate": "2026-03-31",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 1
+        },
+        {
+          "id": "ex_sc3",
+          "sectionId": "ex_s_framing",
+          "label": "Functional specifications",
+          "startDate": "2026-03-23",
+          "endDate": "2026-04-10",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 2
+        },
+        {
+          "id": "ex_sc4",
+          "sectionId": "ex_s_framing",
+          "label": "Technical architecture",
+          "startDate": "2026-03-30",
+          "endDate": "2026-04-17",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 3
+        },
+        {
+          "id": "ex_sc5",
+          "sectionId": "ex_s_framing",
+          "label": "Post-launch v2 roadmap (TBC)",
+          "startDate": "2026-07-01",
+          "endDate": "2026-07-31",
+          "status": "pending",
+          "type": "bar",
+          "position": 4
+        }
+      ]
+    },
+    {
+      "id": "ex_s_design",
+      "roadmapId": "ex_saas",
+      "label": "🎨 Design & UX",
+      "color": "cyan",
+      "position": 2,
+      "tasks": [
+        {
+          "id": "ex_sd1",
+          "sectionId": "ex_s_design",
+          "label": "Wireframes — main flows",
+          "startDate": "2026-03-23",
+          "endDate": "2026-04-10",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 0
+        },
+        {
+          "id": "ex_sd2",
+          "sectionId": "ex_s_design",
+          "label": "Design system & UI kit",
+          "startDate": "2026-04-06",
+          "endDate": "2026-04-24",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 1
+        },
+        {
+          "id": "ex_sd3",
+          "sectionId": "ex_s_design",
+          "label": "High-fidelity mockups",
+          "startDate": "2026-04-13",
+          "endDate": "2026-05-08",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 2
+        },
+        {
+          "id": "ex_sd4",
+          "sectionId": "ex_s_design",
+          "label": "Onboarding & empty states",
+          "startDate": "2026-04-27",
+          "endDate": "2026-05-15",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Critical for activation. Plan illustrations and micro-copy.",
+          "position": 3
+        },
+        {
+          "id": "ex_sd5",
+          "sectionId": "ex_s_design",
+          "label": "Marketing landing page",
+          "startDate": "2026-05-18",
+          "endDate": "2026-06-05",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 4
+        },
+        {
+          "id": "ex_sd6",
+          "sectionId": "ex_s_design",
+          "label": "Post-beta design iterations",
+          "startDate": "2026-06-08",
+          "endDate": "2026-07-10",
+          "status": "pending",
+          "type": "bar",
+          "note": "Scope depends on beta feedback — to be refined.",
+          "position": 5
+        }
+      ]
+    },
+    {
+      "id": "ex_s_tech",
+      "roadmapId": "ex_saas",
+      "label": "⚙️ Tech",
+      "color": "green",
+      "position": 3,
+      "tasks": [
+        {
+          "id": "ex_st1",
+          "sectionId": "ex_s_tech",
+          "label": "Infra setup & CI/CD",
+          "startDate": "2026-03-30",
+          "endDate": "2026-04-10",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 0
+        },
+        {
+          "id": "ex_st2",
+          "sectionId": "ex_s_tech",
+          "label": "Auth & account management",
+          "startDate": "2026-04-06",
+          "endDate": "2026-04-24",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 1
+        },
+        {
+          "id": "ex_st3",
+          "sectionId": "ex_s_tech",
+          "label": "Core feature — Sprint 1",
+          "startDate": "2026-04-13",
+          "endDate": "2026-04-30",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 2
+        },
+        {
+          "id": "ex_st4",
+          "sectionId": "ex_s_tech",
+          "label": "Core feature — Sprint 2",
+          "startDate": "2026-04-27",
+          "endDate": "2026-05-15",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 3
+        },
+        {
+          "id": "ex_st5",
+          "sectionId": "ex_s_tech",
+          "label": "Stripe integration — billing",
+          "startDate": "2026-05-04",
+          "endDate": "2026-05-22",
+          "status": "confirmed",
+          "type": "bar",
+          "note": "Starter / Pro / Enterprise plans. Include 14-day free trial.",
+          "position": 4
+        },
+        {
+          "id": "ex_st6",
+          "sectionId": "ex_s_tech",
+          "label": "Beta stabilization & QA",
+          "startDate": "2026-05-18",
+          "endDate": "2026-06-05",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 5
+        },
+        {
+          "id": "ex_st7",
+          "sectionId": "ex_s_tech",
+          "label": "Performance & scalability",
+          "startDate": "2026-06-08",
+          "endDate": "2026-06-26",
+          "status": "confirmed",
+          "type": "bar",
+          "position": 6
+        },
+        {
+          "id": "ex_st8",
+          "sectionId": "ex_s_tech",
+          "label": "Public API v1 (TBC)",
+          "startDate": "2026-07-06",
+          "endDate": "2026-08-14",
+          "status": "pending",
+          "type": "bar",
+          "position": 7
+        }
+      ]
+    }
+  ]
+}
