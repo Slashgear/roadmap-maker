@@ -221,17 +221,20 @@ export default function GanttChart({
                 const color = STATUS_COLOR[task.status]
                 const textColor = STATUS_TEXT[task.status]
                 const isPending = task.status === 'pending'
+                const isDone = task.status === 'done'
 
                 // Bar visuals per status
                 const barBg = isPending
                   ? `repeating-linear-gradient(-45deg, ${color}55 0px, ${color}55 5px, ${color}aa 5px, ${color}aa 10px)`
-                  : color
-                const barBorder = isPending ? `1.5px solid ${color}` : 'none'
+                  : isDone
+                    ? `${color}88`
+                    : color
+                const barBorder = isPending ? `1.5px solid ${color}` : isDone ? `1.5px solid ${color}` : 'none'
                 const barColor = isPending ? color : textColor
 
                 // Milestone visuals per status
-                const diamondBg = isPending ? 'transparent' : color
-                const diamondBorder = isPending ? `2px solid ${color}` : 'none'
+                const diamondBg = isPending ? 'transparent' : isDone ? `${color}88` : color
+                const diamondBorder = isPending ? `2px solid ${color}` : isDone ? `2px solid ${color}88` : 'none'
 
                 return (
                   <>
