@@ -1,5 +1,12 @@
 # @slashgear/roadmap-maker
 
+## 1.1.0
+
+### Minor Changes
+
+- 64e4eb8: Add PNG export button for the Gantt chart
+- 58d9486: Tasks within a section are now automatically sorted by ascending start date whenever a task is added or updated.
+
 ## 1.0.0
 
 ### Major Changes
@@ -9,11 +16,13 @@
   The app no longer needs a server or database. All roadmap data is stored in `localStorage` and can be imported/exported as JSON files.
 
   **Breaking changes:**
+
   - Removed Hono REST API server (`src/` directory deleted)
   - Removed libsql/SQLite database dependency
   - Data is no longer persisted server-side — existing server data will not migrate automatically
 
   **New features:**
+
   - Export any roadmap as a `.json` file via the "Export" button
   - Import a roadmap JSON file (validated with Zod) via the "Import" button
   - Data persists across sessions via `localStorage`
@@ -27,6 +36,7 @@
 - f275eec: Replace task color system with semantic status (confirmed / pending / critical)
 
   Tasks now carry a `status` field instead of a free-form `color`. Each status has a distinct visual:
+
   - Bar confirmed: solid green fill
   - Bar pending (on hold): translucent orange with dashed border
   - Bar critical: solid red fill
