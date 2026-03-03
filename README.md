@@ -18,7 +18,7 @@ Data lives in your browser (`localStorage`) and can be exported/imported as JSON
 - **Gantt chart visualization** — timeline view with month headers, week grid lines, and a live "today" marker
 - **Multiple roadmaps** — create and switch between as many roadmaps as you need
 - **Sections & tasks** — organize work into color-coded sections, each containing bar tasks or milestone markers
-- **3 task statuses** — Confirmed (green), On hold (orange dashed), Critical (red)
+- **5 task statuses** — Confirmed (green), In progress (blue), On hold (orange dashed), Critical (red), Done (gray)
 - **Notes per task** — freeform context attached to any task
 - **Export / Import JSON** — download any roadmap as `.json`, reimport it anywhere
 - **Persistent** — data survives tab and browser restarts via `localStorage`
@@ -93,7 +93,7 @@ The repo ships an [agent skill](./.agents/skills/roadmap-import/AGENTS.md) that 
 Then paste your CSV or JSON payload. The skill will:
 
 1. Show you the proposed field mapping before generating anything
-2. Map statuses to `confirmed / started / pending / critical`
+2. Map statuses to `confirmed / started / pending / critical / done`
 3. Group items into sections (by epic, label, milestone, or component)
 4. Assign section colors automatically
 5. Write a `roadmap-export.json` file you can drag into the Import button
@@ -191,7 +191,7 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
       "id": "sec-1",
       "roadmapId": "unique-id",
       "label": "🎨 Design",
-      "color": "design", // milestones | framing | design | tech
+      "color": "cyan", // orange | purple | cyan | green | pink | blue | amber | indigo | lime | rose | teal | slate
       "position": 0,
       "tasks": [
         {
@@ -200,7 +200,7 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
           "label": "Homepage redesign",
           "startDate": "2026-01-05",
           "endDate": "2026-01-19",
-          "status": "confirmed", // confirmed | pending | critical
+          "status": "confirmed", // confirmed | started | pending | critical | done
           "type": "bar", // bar | milestone
           "note": "Optional context, decisions, links…",
           "position": 0,
@@ -213,20 +213,19 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
 
 ### Colors
 
-| Value        | Color  | Use for                     |
-| ------------ | ------ | --------------------------- |
-| `milestones` | Orange | Key dates, milestones       |
-| `framing`    | Purple | Discovery, specs, product   |
-| `design`     | Cyan   | UX, UI, creative            |
-| `tech`       | Green  | Engineering, infrastructure |
+12 colors available for sections:
+
+`orange` `purple` `cyan` `green` `pink` `blue` `amber` `indigo` `lime` `rose` `teal` `slate`
 
 ### Statuses
 
-| Value       | Appearance          | Meaning                        |
-| ----------- | ------------------- | ------------------------------ |
-| `confirmed` | Solid fill          | Planned and confirmed          |
-| `pending`   | Dashed, translucent | On hold or awaiting validation |
-| `critical`  | Solid red           | Hard deadline, must not slip   |
+| Value       | Color  | Appearance          | Meaning                        |
+| ----------- | ------ | ------------------- | ------------------------------ |
+| `confirmed` | Green  | Solid fill          | Planned and confirmed          |
+| `started`   | Blue   | Solid fill          | Currently in progress          |
+| `pending`   | Orange | Dashed, translucent | On hold or awaiting validation |
+| `critical`  | Red    | Solid fill          | Hard deadline, must not slip   |
+| `done`      | Gray   | Solid fill          | Completed                      |
 
 ---
 

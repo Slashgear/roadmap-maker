@@ -563,6 +563,17 @@ export default function App() {
             )}
           </div>
         </main>
+        <footer className="mt-10 text-center text-[11px] text-gray-400">
+          <a
+            href="https://github.com/Slashgear/roadmap-maker"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-sm"
+          >
+            Github
+          </a>
+          {' · '}v{__APP_VERSION__}
+        </footer>
       </div>
 
       {/* Modals */}

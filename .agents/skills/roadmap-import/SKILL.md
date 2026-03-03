@@ -48,10 +48,11 @@ Task {
 **TaskStatus values:**
 | Value | Meaning | Visual |
 |-------|---------|--------|
-| `confirmed` | Done / validated | Solid green bar |
-| `started` | In progress | Solid blue bar |
+| `confirmed` | Planned and confirmed | Solid green bar |
+| `started` | Currently in progress | Solid blue bar |
 | `pending` | On hold / unclear | Diagonal orange stripes |
-| `critical` | Blocking / at risk | Red outline |
+| `critical` | Blocking / at risk | Solid red bar |
+| `done` | Completed | Solid gray bar |
 
 **SectionColor palette** (12 choices):
 `orange` `purple` `cyan` `green` `pink` `blue` `amber` `indigo` `lime` `rose` `teal` `slate`
@@ -80,9 +81,9 @@ Task {
    ```
 
 3. **Map statuses** — ask the user to confirm uncertain mappings:
-   - Jira: `Done` → `confirmed`, `In Progress` → `started`, `To Do` / `Backlog` → `pending`, `Blocked` → `critical`
-   - GitLab: `closed` → `confirmed`, `opened` + label `doing` → `started`, `opened` → `pending`
-   - Linear: `Done` / `Completed` → `confirmed`, `In Progress` → `started`, `Todo` / `Backlog` → `pending`, `Blocked` / `Cancelled` → `critical`
+   - Jira: `Done` → `done`, `In Progress` → `started`, `To Do` / `Backlog` → `pending`, `Blocked` → `critical`
+   - GitLab: `closed` → `done`, `opened` + label `doing` → `started`, `opened` → `pending`
+   - Linear: `Done` / `Completed` → `done`, `In Progress` → `started`, `Todo` / `Backlog` → `pending`, `Blocked` / `Cancelled` → `critical`
 
 4. **Group into sections** — use epic, label, milestone, or component as the grouping key. If no grouping exists, put everything in a single "Tasks" section.
 
