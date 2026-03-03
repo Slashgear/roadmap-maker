@@ -8,7 +8,7 @@ export const TaskSchema = z.object({
   label: z.string(),
   startDate: isoDate,
   endDate: isoDate,
-  status: z.enum(['confirmed', 'started', 'pending', 'critical']),
+  status: z.enum(['confirmed', 'started', 'pending', 'critical', 'done']),
   type: z.enum(['bar', 'milestone']),
   note: z.string().optional(),
   position: z.number(),

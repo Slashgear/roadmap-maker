@@ -1,4 +1,4 @@
-export type TaskStatus = 'confirmed' | 'started' | 'pending' | 'critical'
+export type TaskStatus = 'confirmed' | 'started' | 'pending' | 'critical' | 'done'
 export type SectionColor =
   | 'orange'
   | 'purple'
@@ -59,7 +59,7 @@ export const SECTION_COLORS: SectionColor[] = [
   'teal',
   'slate',
 ]
-export const TASK_STATUSES: TaskStatus[] = ['confirmed', 'started', 'pending', 'critical']
+export const TASK_STATUSES: TaskStatus[] = ['confirmed', 'started', 'pending', 'critical', 'done']
 
 export const COLOR_HEX: Record<SectionColor, string> = {
   orange: '#f97316',
@@ -112,6 +112,7 @@ export const STATUS_COLOR: Record<TaskStatus, string> = {
   started: '#3b82f6',
   pending: '#f97316',
   critical: '#ef4444',
+  done: '#6b7280',
 }
 
 export const STATUS_TEXT: Record<TaskStatus, string> = {
@@ -119,15 +120,23 @@ export const STATUS_TEXT: Record<TaskStatus, string> = {
   started: '#fff',
   pending: '#1a0e00',
   critical: '#fff',
+  done: '#fff',
 }
 
 // Labels differ between bar and milestone for the same status
 export const STATUS_LABEL: Record<TaskType, Record<TaskStatus, string>> = {
-  bar: { confirmed: 'Confirmed', started: 'In progress', pending: 'On hold', critical: 'Critical' },
+  bar: {
+    confirmed: 'Confirmed',
+    started: 'In progress',
+    pending: 'On hold',
+    critical: 'Critical',
+    done: 'Done',
+  },
   milestone: {
     confirmed: 'Confirmed',
     started: 'In progress',
     pending: 'Pending',
     critical: 'Critical',
+    done: 'Done',
   },
 }
