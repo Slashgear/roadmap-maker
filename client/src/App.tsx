@@ -251,7 +251,10 @@ export default function App() {
       ...roadmap,
       sections: roadmap.sections.map((s) =>
         s.id === task.sectionId
-          ? { ...s, tasks: sortedByStartDate(s.tasks.map((t) => (t.id === task.id ? updatedTask : t))) }
+          ? {
+              ...s,
+              tasks: sortedByStartDate(s.tasks.map((t) => (t.id === task.id ? updatedTask : t))),
+            }
           : s,
       ),
     }
