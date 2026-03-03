@@ -315,6 +315,30 @@ export default function App() {
     URL.revokeObjectURL(a.href)
   }
 
+  async function handleExportPng() {
+    if (!roadmap) return
+    const outer = document.getElementById('main-chart')?.firstElementChild as HTMLElement | null
+    if (!outer) return
+    const scrollDiv = outer.querySelector<HTMLElement>(':scope > div')
+    const prevOuter = outer.style.overflow
+    const prevScroll = scrollDiv?.style.overflow ?? ''
+    outer.style.overflow = 'visible'
+    if (scrollDiv) scrollDiv.style.overflow = 'visible'
+    const w = outer.scrollWidth
+    const h = outer.scrollHeight
+    try {
+      const { toPng } = await import('html-to-image')
+      const url = await toPng(outer, { pixelRatio: 2, width: w, height: h })
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${roadmap.slug}-gantt.png`
+      a.click()
+    } finally {
+      outer.style.overflow = prevOuter
+      if (scrollDiv) scrollDiv.style.overflow = prevScroll
+    }
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -381,6 +405,9 @@ export default function App() {
                   </Btn>
                   <Btn onClick={handleExport} variant="ghost">
                     Export
+                  </Btn>
+                  <Btn onClick={handleExportPng} variant="ghost">
+                    Export PNG
                   </Btn>
                 </>
               )}
