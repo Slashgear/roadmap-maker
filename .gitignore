@@ -6,3 +6,4 @@ data/
 *.db
 dist/
 .DS_Store
+client/src/vite-env.d.ts
