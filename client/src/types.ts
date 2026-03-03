@@ -1,4 +1,6 @@
-declare const __APP_VERSION__: string
+declare global {
+  const __APP_VERSION__: string
+}
 
 export type TaskStatus = 'confirmed' | 'started' | 'pending' | 'critical' | 'done'
 export type SectionColor =
