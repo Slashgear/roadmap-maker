@@ -1,5 +1,11 @@
 # @slashgear/roadmap-maker
 
+## 1.2.0
+
+### Minor Changes
+
+- b774570: Add footer with version number and GitHub link
+
 ## 1.1.0
 
 ### Minor Changes
