@@ -128,8 +128,14 @@ export default function TaskModal({
                     className="inline-block w-2 h-2 shrink-0"
                     style={{
                       borderRadius: s === 'pending' ? '50%' : 2,
-                      background: s === 'pending' ? 'transparent' : s === 'done' ? `${color}88` : color,
-                      border: s === 'pending' ? `2px solid ${color}` : s === 'done' ? `1.5px solid ${color}` : 'none',
+                      background:
+                        s === 'pending' ? 'transparent' : s === 'done' ? `${color}88` : color,
+                      border:
+                        s === 'pending'
+                          ? `2px solid ${color}`
+                          : s === 'done'
+                            ? `1.5px solid ${color}`
+                            : 'none',
                     }}
                   />
                   {STATUS_LABEL[type][s]}

@@ -125,7 +125,13 @@ export const STATUS_TEXT: Record<TaskStatus, string> = {
 
 // Labels differ between bar and milestone for the same status
 export const STATUS_LABEL: Record<TaskType, Record<TaskStatus, string>> = {
-  bar: { confirmed: 'Confirmed', started: 'In progress', pending: 'On hold', critical: 'Critical', done: 'Done' },
+  bar: {
+    confirmed: 'Confirmed',
+    started: 'In progress',
+    pending: 'On hold',
+    critical: 'Critical',
+    done: 'Done',
+  },
   milestone: {
     confirmed: 'Confirmed',
     started: 'In progress',

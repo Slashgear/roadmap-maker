@@ -229,12 +229,20 @@ export default function GanttChart({
                   : isDone
                     ? `${color}88`
                     : color
-                const barBorder = isPending ? `1.5px solid ${color}` : isDone ? `1.5px solid ${color}` : 'none'
+                const barBorder = isPending
+                  ? `1.5px solid ${color}`
+                  : isDone
+                    ? `1.5px solid ${color}`
+                    : 'none'
                 const barColor = isPending ? color : textColor
 
                 // Milestone visuals per status
                 const diamondBg = isPending ? 'transparent' : isDone ? `${color}88` : color
-                const diamondBorder = isPending ? `2px solid ${color}` : isDone ? `2px solid ${color}88` : 'none'
+                const diamondBorder = isPending
+                  ? `2px solid ${color}`
+                  : isDone
+                    ? `2px solid ${color}88`
+                    : 'none'
 
                 return (
                   <>
