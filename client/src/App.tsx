@@ -219,6 +219,12 @@ export default function App() {
 
   // ── Task handlers ─────────────────────────────────────────────────────────
 
+  function sortedByStartDate(tasks: Task[]): Task[] {
+    return tasks
+      .toSorted((a, b) => a.startDate.localeCompare(b.startDate))
+      .map((t, i) => ({ ...t, position: i }))
+  }
+
   function handleAddTask(sectionId: string, data: Omit<Task, 'id' | 'sectionId' | 'position'>) {
     if (!roadmap) return
     const task: Task = {
@@ -230,7 +236,7 @@ export default function App() {
     const updated: Roadmap = {
       ...roadmap,
       sections: roadmap.sections.map((s) =>
-        s.id === sectionId ? { ...s, tasks: [...s.tasks, task] } : s,
+        s.id === sectionId ? { ...s, tasks: sortedByStartDate([...s.tasks, task]) } : s,
       ),
     }
     const updatedList = roadmaps.map((r) => (r.id === roadmap.id ? updated : r))
@@ -245,7 +251,10 @@ export default function App() {
       ...roadmap,
       sections: roadmap.sections.map((s) =>
         s.id === task.sectionId
-          ? { ...s, tasks: s.tasks.map((t) => (t.id === task.id ? updatedTask : t)) }
+          ? {
+              ...s,
+              tasks: sortedByStartDate(s.tasks.map((t) => (t.id === task.id ? updatedTask : t))),
+            }
           : s,
       ),
     }
