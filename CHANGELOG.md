@@ -1,5 +1,21 @@
 # @slashgear/roadmap-maker
 
+## 1.4.0
+
+### Minor Changes
+
+- 4102303: feat: add optional external link per task
+
+  Tasks can now have an optional `externalLink` URL (Jira ticket, GitHub issue, Linear item, etc.).
+  The link is displayed as a clickable icon in the Gantt left column and opens in a new tab.
+  The field is validated as a URL on JSON import and editable via the task modal.
+
+### Patch Changes
+
+- fed62d2: refactor: replace manual error state with native HTML5 validation in TaskModal
+
+  Use `required` on the name field and rely on the browser's built-in constraint validation instead of a custom error state.
+
 ## 1.3.0
 
 ### Minor Changes
