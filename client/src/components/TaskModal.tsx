@@ -31,12 +31,9 @@ export default function TaskModal({
   const [type, setType] = useState<'bar' | 'milestone'>(task?.type ?? 'bar')
   const [note, setNote] = useState(task?.note ?? '')
   const [externalLink, setExternalLink] = useState(task?.externalLink ?? '')
-  const [error, setError] = useState('')
 
   function handleSubmit(e: Event) {
     e.preventDefault()
-    if (!label.trim()) return setError('Name is required')
-    setError('')
     onSave({
       label: label.trim(),
       startDate,
@@ -63,6 +60,7 @@ export default function TaskModal({
             value={label}
             onChange={(e) => setLabel(e.currentTarget.value)}
             placeholder="Ex: Navigation — Integration"
+            required
             autoFocus
           />
         </FormField>
@@ -163,8 +161,6 @@ export default function TaskModal({
             placeholder="Context, decisions, links…"
           />
         </FormField>
-
-        {error && <p className="text-red-500 text-[13px] mb-2">{error}</p>}
 
         <ModalActions onClose={onClose} onDelete={onDelete ? handleDelete : undefined} />
       </form>
