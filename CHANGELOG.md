@@ -1,5 +1,11 @@
 # @slashgear/roadmap-maker
 
+## 1.3.0
+
+### Minor Changes
+
+- 7a78272: Add new status done for tasks
+
 ## 1.2.0
 
 ### Minor Changes
