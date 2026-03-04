@@ -27,6 +27,7 @@ export interface Task {
   status: TaskStatus
   type: TaskType
   note?: string
+  externalLink?: string
   position: number
 }
 

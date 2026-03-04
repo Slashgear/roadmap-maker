@@ -30,6 +30,7 @@ export default function TaskModal({
   const [status, setStatus] = useState<TaskStatus>(task?.status ?? 'confirmed')
   const [type, setType] = useState<'bar' | 'milestone'>(task?.type ?? 'bar')
   const [note, setNote] = useState(task?.note ?? '')
+  const [externalLink, setExternalLink] = useState(task?.externalLink ?? '')
   const [error, setError] = useState('')
 
   function handleSubmit(e: Event) {
@@ -43,6 +44,7 @@ export default function TaskModal({
       status,
       type,
       note: note.trim() || undefined,
+      externalLink: externalLink.trim() || undefined,
     })
   }
 
@@ -143,6 +145,15 @@ export default function TaskModal({
               )
             })}
           </div>
+        </FormField>
+
+        <FormField label="External link (optional)">
+          <input
+            type="url"
+            value={externalLink}
+            onChange={(e) => setExternalLink(e.currentTarget.value)}
+            placeholder="https://yourorg.atlassian.net/browse/PROJ-42"
+          />
         </FormField>
 
         <FormField label="Note (optional)">

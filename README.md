@@ -20,6 +20,7 @@ Data lives in your browser (`localStorage`) and can be exported/imported as JSON
 - **Sections & tasks** — organize work into color-coded sections, each containing bar tasks or milestone markers
 - **5 task statuses** — Confirmed (green), In progress (blue), On hold (orange dashed), Critical (red), Done (gray)
 - **Notes per task** — freeform context attached to any task
+- **External links per task** — attach any URL (Jira ticket, GitHub issue, Linear item…) displayed as a clickable icon in the Gantt left column
 - **Export / Import JSON** — download any roadmap as `.json`, reimport it anywhere
 - **Persistent** — data survives tab and browser restarts via `localStorage`
 - **Self-hostable** — one Docker command, no external services required
@@ -203,6 +204,7 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
           "status": "confirmed", // confirmed | started | pending | critical | done
           "type": "bar", // bar | milestone
           "note": "Optional context, decisions, links…",
+          "externalLink": "https://yourorg.atlassian.net/browse/PROJ-42", // optional URL (Jira, GitHub, Linear…)
           "position": 0,
         },
       ],

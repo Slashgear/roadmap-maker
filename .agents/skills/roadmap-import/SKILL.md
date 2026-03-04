@@ -41,6 +41,7 @@ Task {
   status: TaskStatus      // see values below
   type: "bar" | "milestone"
   note?: string           // optional free-text annotation
+  externalLink?: string   // optional URL — Jira ticket, GitHub issue, Linear item, etc.
   position: number        // 0-based display order within section
 }
 ```
@@ -60,7 +61,7 @@ Task {
 ## Workflow
 
 1. **Ask for the data source** if not provided as argument:
-   - CSV paste (columns: label, start, end, section, status, type, note)
+   - CSV paste (columns: label, start, end, section, status, type, note, url)
    - Jira JSON export or JQL query result
    - GitLab issues JSON (`/api/v4/issues`)
    - Linear export
@@ -78,6 +79,7 @@ Task {
    status            → task.status (mapped, see below)
    milestone         → task.type = "milestone" if applicable
    description       → task.note (truncated to 200 chars)
+   url / link / href → task.externalLink (kept as-is if valid URL)
    ```
 
 3. **Map statuses** — ask the user to confirm uncertain mappings:
@@ -98,10 +100,10 @@ Task {
 Minimum viable CSV (column names are flexible, ask if ambiguous):
 
 ```csv
-label,start,end,section,status,type,note
-"Homepage redesign",2026-01-05,2026-01-19,Design,started,bar,"Waiting on brand assets"
-"API migration",2026-01-12,2026-02-09,Tech,confirmed,bar,
-"Go-live",2026-02-10,2026-02-10,Milestones,critical,milestone,
+label,start,end,section,status,type,note,url
+"Homepage redesign",2026-01-05,2026-01-19,Design,started,bar,"Waiting on brand assets",https://yourorg.atlassian.net/browse/PROJ-12
+"API migration",2026-01-12,2026-02-09,Tech,confirmed,bar,,
+"Go-live",2026-02-10,2026-02-10,Milestones,critical,milestone,,
 ```
 
 ## Jira example mapping
@@ -136,6 +138,7 @@ Maps to:
   "status": "started",
   "type": "bar",
   "note": "...",
+  "externalLink": "https://yourorg.atlassian.net/browse/PROJ-42",
   "position": 0
 }
 ```

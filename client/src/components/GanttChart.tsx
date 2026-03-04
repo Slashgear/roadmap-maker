@@ -247,7 +247,7 @@ export default function GanttChart({
                 return (
                   <>
                     <button
-                      className={`${STICKY} w-full flex items-center pr-3.5 pl-[22px] text-[12.5px] text-app-text bg-app-surface border-r border-b border-app-border text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500`}
+                      className={`${STICKY} w-full flex items-center gap-1.5 pr-2 pl-[22px] text-[12.5px] text-app-text bg-app-surface border-r border-b border-app-border text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500`}
                       style={{ height: ROW_H }}
                       onClick={() => onEditTask(task)}
                       aria-label={[
@@ -255,11 +255,46 @@ export default function GanttChart({
                         STATUS_LABEL[task.type][task.status],
                         `${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}`,
                         task.note ? `Note: ${task.note}` : null,
+                        task.externalLink ? `Link: ${task.externalLink}` : null,
                       ]
                         .filter(Boolean)
                         .join(' — ')}
                     >
-                      <span className="truncate">{task.label}</span>
+                      <span className="truncate flex-1">{task.label}</span>
+                      {task.externalLink && (
+                        <a
+                          href={task.externalLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title={task.externalLink}
+                          aria-label="Open external link"
+                          className="shrink-0 text-gray-500 hover:text-violet-400 transition-colors"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7"
+                              stroke="currentColor"
+                              stroke-width="1.25"
+                              stroke-linecap="round"
+                            />
+                            <path
+                              d="M7.5 1H11v3.5M11 1 6 6"
+                              stroke="currentColor"
+                              stroke-width="1.25"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </a>
+                      )}
                     </button>
                     <div
                       className="relative overflow-hidden border-b border-app-border cursor-pointer"

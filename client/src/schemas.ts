@@ -11,6 +11,7 @@ export const TaskSchema = z.object({
   status: z.enum(['confirmed', 'started', 'pending', 'critical', 'done']),
   type: z.enum(['bar', 'milestone']),
   note: z.string().optional(),
+  externalLink: z.string().url().optional(),
   position: z.number(),
 })
 
