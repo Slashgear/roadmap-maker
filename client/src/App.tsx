@@ -462,7 +462,7 @@ export default function App() {
             style={{ display: 'none' }}
             onChange={(e) => {
               const file = e.currentTarget.files?.[0]
-              if (file) handleImport(file)
+              if (file) void handleImport(file)
               e.currentTarget.value = ''
             }}
           />
