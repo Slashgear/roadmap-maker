@@ -1,5 +1,16 @@
 # @slashgear/roadmap-maker
 
+## 1.5.0
+
+### Minor Changes
+
+- bbd95fd: Add landing page with hero, feature cards and examples to the empty state.
+
+### Patch Changes
+
+- 2fd70b4: Improve external link input styling in TaskModal: apply consistent dark theme and add a link icon prefix.
+- c98a9fb: Reduce initial JS bundle by 73%: replace temporal-polyfill with native Date, switch to zod/mini, and lazy-load schemas and example JSONs.
+
 ## 1.4.2
 
 ### Patch Changes
