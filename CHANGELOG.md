@@ -1,5 +1,11 @@
 # @slashgear/roadmap-maker
 
+## 1.4.1
+
+### Patch Changes
+
+- 7452838: Fix CI/CD release pipeline: add git user config for tag creation, fetch-depth 0 for changesets, and extract proper changelog from CHANGELOG.md for GitHub releases.
+
 ## 1.4.0
 
 ### Minor Changes
