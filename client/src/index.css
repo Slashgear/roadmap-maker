@@ -40,6 +40,7 @@ body {
 /* Form inputs */
 input[type='text'],
 input[type='date'],
+input[type='url'],
 textarea {
   background: #0f1117;
   border: 1px solid #252b3b;
@@ -54,6 +55,7 @@ textarea {
 }
 input[type='text']:focus,
 input[type='date']:focus,
+input[type='url']:focus,
 textarea:focus {
   border-color: #8b5cf6;
 }
