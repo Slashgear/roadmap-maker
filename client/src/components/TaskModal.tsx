@@ -94,19 +94,24 @@ export default function TaskModal({
         <FormField label="Type">
           <div className="flex gap-2">
             {(['bar', 'milestone'] as const).map((t) => (
-              <button
+              <label
                 key={t}
-                type="button"
-                onClick={() => setType(t)}
-                className={`px-4 py-1.5 rounded-md border text-[13px] cursor-pointer ${
+                className={`px-4 py-1.5 rounded-md border text-[13px] cursor-pointer select-none ${
                   type === t
                     ? 'border-violet-500 bg-violet-500/15 text-violet-300'
-                    : 'border-app-border bg-transparent text-gray-300'
+                    : 'border-app-border text-gray-300'
                 }`}
-                aria-pressed={type === t}
               >
+                <input
+                  type="radio"
+                  name="task-type"
+                  value={t}
+                  checked={type === t}
+                  onChange={() => setType(t)}
+                  className="sr-only"
+                />
                 {t === 'bar' ? '▬ Bar' : '◆ Milestone'}
-              </button>
+              </label>
             ))}
           </div>
         </FormField>
@@ -117,20 +122,26 @@ export default function TaskModal({
               const active = status === s
               const color = STATUS_COLOR[s]
               return (
-                <button
+                <label
                   key={s}
-                  type="button"
-                  onClick={() => setStatus(s)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] cursor-pointer whitespace-nowrap"
-                  aria-pressed={active}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] cursor-pointer whitespace-nowrap select-none"
                   style={{
                     border: `1px solid ${active ? color : '#252b3b'}`,
                     background: active ? `${color}22` : 'transparent',
                     color: active ? color : '#d1d5db',
                   }}
                 >
+                  <input
+                    type="radio"
+                    name="task-status"
+                    value={s}
+                    checked={active}
+                    onChange={() => setStatus(s)}
+                    className="sr-only"
+                  />
                   <span
                     className="inline-block w-2 h-2 shrink-0"
+                    aria-hidden="true"
                     style={{
                       borderRadius: s === 'pending' ? '50%' : 2,
                       background:
@@ -144,13 +155,19 @@ export default function TaskModal({
                     }}
                   />
                   {STATUS_LABEL[type][s]}
-                </button>
+                </label>
               )
             })}
           </div>
         </FormField>
 
-        <FormField label="External link (optional)">
+        <div className="mb-4">
+          <label
+            htmlFor="f-external-link"
+            className="block text-[12px] font-medium text-gray-300 mb-1.5"
+          >
+            External link <span className="text-gray-500 font-normal">(optional)</span>
+          </label>
           <div className="relative">
             <span
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
@@ -171,6 +188,7 @@ export default function TaskModal({
               </svg>
             </span>
             <input
+              id="f-external-link"
               type="url"
               value={externalLink}
               onChange={(e) => setExternalLink(e.currentTarget.value)}
@@ -178,7 +196,7 @@ export default function TaskModal({
               style={{ paddingLeft: 34 }}
             />
           </div>
-        </FormField>
+        </div>
 
         <FormField label="Note (optional)">
           <textarea

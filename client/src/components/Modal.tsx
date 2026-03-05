@@ -27,6 +27,13 @@ export default function Modal({
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const el =
+      dialogRef.current?.querySelector<HTMLElement>('[autofocus],[autoFocus]') ??
+      dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE)[0]
+    el?.focus()
+  }, [])
+
+  useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         onClose()
