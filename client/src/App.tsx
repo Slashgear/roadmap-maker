@@ -670,11 +670,12 @@ function EmptyState({
   onLoadExample: (slug: string) => Promise<void>
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 border border-dashed border-app-border rounded-xl gap-4 text-center">
-      <div style={{ fontSize: 40 }}>🗺️</div>
-      <h2 className="text-lg font-bold text-white">No roadmaps yet</h2>
-      <p className="text-gray-400 text-sm max-w-[360px]">
-        Create your first roadmap to visualize your projects as a Gantt timeline.
+    <div className="flex flex-col items-center py-16 px-6 text-center">
+      <div style={{ fontSize: 44 }}>🗺️</div>
+      <h2 className="text-3xl font-bold text-white mt-4 mb-3">Roadmap Maker</h2>
+      <p className="text-gray-300 text-base max-w-md mx-auto mb-6">
+        Build clear Gantt timelines for your projects. Plan, share and export — entirely in your
+        browser.
       </p>
       <button
         onClick={onCreateRoadmap}
@@ -683,13 +684,65 @@ function EmptyState({
         + Create a roadmap
       </button>
 
-      <div className="flex items-center gap-3 w-full max-w-[480px] mt-2">
+      <section className="mt-14 max-w-2xl w-full mx-auto">
+        <h3 className="text-base font-semibold text-white mb-5">Why use this tool?</h3>
+        <div className="grid grid-cols-2 gap-4 text-left">
+          <div className="bg-white/5 rounded-lg p-4 border border-violet-500/20">
+            <h4 className="font-medium text-violet-200 mb-1.5">No account, no server</h4>
+            <p className="text-sm text-gray-400">
+              Everything is stored locally in your browser. No signup, no backend, no data sent
+              anywhere.
+            </p>
+          </div>
+          <div className="bg-white/5 rounded-lg p-4 border border-violet-500/20">
+            <h4 className="font-medium text-violet-200 mb-1.5">
+              Free, open-source &amp; self-hostable
+            </h4>
+            <p className="text-sm text-gray-400">
+              No premium tier, no limits.{' '}
+              <a
+                href="https://github.com/Slashgear/roadmap-maker/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-300 hover:text-violet-100 underline"
+              >
+                MIT licensed
+              </a>
+              , deployable with a single Docker image.
+            </p>
+          </div>
+          <div className="bg-white/5 rounded-lg p-4 border border-violet-500/20">
+            <h4 className="font-medium text-violet-200 mb-1.5">Export as PNG</h4>
+            <p className="text-sm text-gray-400">
+              Download your Gantt chart as a high-resolution image, ready to paste into any doc or
+              presentation.
+            </p>
+          </div>
+          <div className="bg-white/5 rounded-lg p-4 border border-violet-500/20">
+            <h4 className="font-medium text-violet-200 mb-1.5">Privacy-first, hosted in Europe</h4>
+            <p className="text-sm text-gray-400">
+              No tracking, no analytics, no data sold. This instance runs on{' '}
+              <a
+                href="https://www.scaleway.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-300 hover:text-violet-100 underline"
+              >
+                Scaleway
+              </a>{' '}
+              servers in Europe.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="flex items-center gap-3 w-full max-w-2xl mt-10">
         <div className="flex-1 h-px bg-app-border" />
         <span className="text-[12px] text-gray-500">or try an example</span>
         <div className="flex-1 h-px bg-app-border" />
       </div>
 
-      <div className="grid grid-cols-3 gap-3 w-full max-w-[480px]">
+      <div className="grid grid-cols-3 gap-3 w-full max-w-2xl mt-4">
         {EXAMPLES.map((ex) => (
           <button
             key={ex.slug}
