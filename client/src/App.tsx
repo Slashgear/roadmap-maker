@@ -1,19 +1,24 @@
 import { useState, useRef, useEffect } from 'preact/hooks'
 import { nanoid } from 'nanoid'
-import { Temporal } from 'temporal-polyfill'
 import type { ComponentChildren } from 'preact'
 import type { Roadmap, Section, Task } from './types'
 import { STATUS_COLOR, STATUS_LABEL, TASK_STATUSES } from './types'
-import { RoadmapSchema } from './schemas'
-import designSystem from '../../examples/design-system.json'
-import saasLaunch from '../../examples/saas-launch.json'
-import mobileApp from '../../examples/mobile-app.json'
-
 const EXAMPLES: Array<{ slug: string; title: string; subtitle: string | null }> = [
-  designSystem,
-  saasLaunch,
-  mobileApp,
+  { slug: 'design-system', title: 'Design System 2.0', subtitle: 'May → Nov 2026' },
+  { slug: 'saas-launch', title: 'SaaS Launch', subtitle: 'Mar → Aug 2026' },
+  { slug: 'mobile-app', title: 'Mobile App v1.0', subtitle: 'Apr → Oct 2026' },
 ]
+
+async function loadExample(slug: string): Promise<unknown> {
+  switch (slug) {
+    case 'design-system':
+      return (await import('../../examples/design-system.json')).default
+    case 'saas-launch':
+      return (await import('../../examples/saas-launch.json')).default
+    default:
+      return (await import('../../examples/mobile-app.json')).default
+  }
+}
 import GanttChart from './components/GanttChart'
 import TaskModal from './components/TaskModal'
 import SectionModal from './components/SectionModal'
@@ -55,12 +60,17 @@ function getSlugFromHash(): string | null {
   return window.location.hash.slice(1) || null
 }
 
+function localISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function defaultViewDates() {
-  const today = Temporal.Now.plainDateISO()
-  return {
-    start: today.subtract({ days: 30 }).toString(),
-    end: today.add({ months: 4 }).toString(),
-  }
+  const today = new Date()
+  const start = new Date(today)
+  start.setDate(start.getDate() - 30)
+  const end = new Date(today)
+  end.setMonth(end.getMonth() + 4)
+  return { start: localISO(start), end: localISO(end) }
 }
 
 export default function App() {
@@ -278,30 +288,32 @@ export default function App() {
 
   // ── Import / Export ───────────────────────────────────────────────────────
 
-  function importRoadmapData(json: unknown): boolean {
-    const result = RoadmapSchema.safeParse(json)
-    if (!result.success) {
-      setImportError('Invalid roadmap file: ' + result.error.issues[0]?.message)
-      return false
-    }
-    const imported = result.data as Roadmap
-    const without = roadmaps.filter((r) => r.slug !== imported.slug)
-    updateRoadmaps([...without, imported], imported)
-    return true
-  }
-
   async function handleImport(file: File) {
     setImportError('')
     try {
-      importRoadmapData(JSON.parse(await file.text()))
+      const json = JSON.parse(await file.text())
+      const { RoadmapSchema } = await import('./schemas')
+      const result = RoadmapSchema.safeParse(json)
+      if (!result.success) {
+        setImportError('Invalid roadmap file: ' + result.error.issues[0]?.message)
+        return
+      }
+      const imported = result.data as Roadmap
+      const without = roadmaps.filter((r) => r.slug !== imported.slug)
+      updateRoadmaps([...without, imported], imported)
     } catch {
       setImportError('Failed to parse JSON file')
     }
   }
 
-  function handleLoadExample(data: unknown) {
+  async function handleLoadExample(slug: string) {
     setImportError('')
-    importRoadmapData(data)
+    const [data, { RoadmapSchema }] = await Promise.all([loadExample(slug), import('./schemas')])
+    const result = RoadmapSchema.safeParse(data)
+    if (!result.success) return
+    const imported = result.data as Roadmap
+    const without = roadmaps.filter((r) => r.slug !== imported.slug)
+    updateRoadmaps([...without, imported], imported)
     setExamplesOpen(false)
   }
 
@@ -423,7 +435,7 @@ export default function App() {
                     {EXAMPLES.map((ex) => (
                       <button
                         key={ex.slug}
-                        onClick={() => handleLoadExample(ex)}
+                        onClick={() => void handleLoadExample(ex.slug)}
                         className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border last:border-0 cursor-pointer bg-transparent"
                       >
                         <div className="font-medium">{ex.title}</div>
@@ -655,7 +667,7 @@ function EmptyState({
   onLoadExample,
 }: {
   onCreateRoadmap: () => void
-  onLoadExample: (data: unknown) => void
+  onLoadExample: (slug: string) => Promise<void>
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 border border-dashed border-app-border rounded-xl gap-4 text-center">
@@ -681,7 +693,7 @@ function EmptyState({
         {EXAMPLES.map((ex) => (
           <button
             key={ex.slug}
-            onClick={() => onLoadExample(ex)}
+            onClick={() => void onLoadExample(ex.slug)}
             className="bg-app-surface border border-app-border rounded-lg p-3 text-left cursor-pointer hover:border-violet-500/50 hover:bg-violet-500/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
           >
             <div className="text-[13px] font-medium text-white">{ex.title}</div>

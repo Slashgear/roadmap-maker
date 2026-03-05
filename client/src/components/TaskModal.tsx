@@ -1,8 +1,13 @@
 import { useState } from 'preact/hooks'
-import { Temporal } from 'temporal-polyfill'
 import Modal, { FormField, ModalActions } from './Modal'
 import type { Task, Roadmap, TaskStatus } from '../types'
 import { TASK_STATUSES, STATUS_COLOR, STATUS_LABEL } from '../types'
+
+function localISO(offsetDays = 0): string {
+  const d = new Date()
+  if (offsetDays) d.setDate(d.getDate() + offsetDays)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 interface Props {
   task?: Task | null
@@ -21,8 +26,8 @@ export default function TaskModal({
   onDelete,
   onClose,
 }: Props) {
-  const today = Temporal.Now.plainDateISO().toString()
-  const defaultEnd = Temporal.Now.plainDateISO().add({ days: 7 }).toString()
+  const today = localISO()
+  const defaultEnd = localISO(7)
 
   const [label, setLabel] = useState(task?.label ?? '')
   const [startDate, setStartDate] = useState(task?.startDate ?? today)
