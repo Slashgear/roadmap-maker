@@ -1,5 +1,11 @@
 # @slashgear/roadmap-maker
 
+## 1.4.2
+
+### Patch Changes
+
+- Fix release pipeline: use native changeset tag for automated versioning and Docker deployment.
+
 ## 1.4.1
 
 ### Patch Changes
