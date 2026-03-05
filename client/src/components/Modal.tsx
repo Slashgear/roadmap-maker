@@ -1,6 +1,15 @@
 import { cloneElement, isValidElement, toChildArray } from 'preact'
 import type { ComponentChildren, VNode } from 'preact'
-import { useEffect } from 'preact/hooks'
+import { useEffect, useRef } from 'preact/hooks'
+
+const FOCUSABLE = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
 
 interface ModalProps {
   title: string
@@ -15,10 +24,30 @@ export default function Modal({
   width = 480,
 }: ModalProps & { width?: number }) {
   const titleId = 'modal-title'
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE))
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -30,6 +59,7 @@ export default function Modal({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
