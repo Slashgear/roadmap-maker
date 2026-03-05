@@ -16,6 +16,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      tagged: ${{ steps.tag.outputs.tagged }}
+      version: ${{ steps.tag.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -39,36 +42,52 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Tag and push release
+        id: tag
         if: steps.changesets.outputs.hasChangesets == 'false'
         run: |
           VERSION=$(node -p "require('./package.json').version")
           if git ls-remote --tags origin "refs/tags/v$VERSION" | grep -q "v$VERSION"; then
             echo "Tag v$VERSION already exists, skipping"
+            echo "tagged=false" >> "$GITHUB_OUTPUT"
           else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git tag "v$VERSION" -m "v$VERSION"
             git push origin "v$VERSION"
             echo "Created and pushed tag v$VERSION"
+            echo "tagged=true" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           fi
 
   # ── GitHub Release ─────────────────────────────────────────────────────────
   github-release:
     name: GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [version-pr]
+    if: always() && (startsWith(github.ref, 'refs/tags/v') || (needs.version-pr.result == 'success' && needs.version-pr.outputs.tagged == 'true'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ needs.version-pr.outputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Extract changelog for this version
         id: changelog
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ steps.version.outputs.version }}"
           NOTES=$(awk "/^## $VERSION/{found=1; next} found && /^## /{exit} found{print}" CHANGELOG.md)
           echo "notes<<EOF" >> "$GITHUB_OUTPUT"
           echo "$NOTES" >> "$GITHUB_OUTPUT"
@@ -77,13 +96,14 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.version }}
           body: ${{ steps.changelog.outputs.notes }}
 
   # ── Docker ─────────────────────────────────────────────────────────────────
   docker:
     name: Docker
-    needs: github-release
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [version-pr, github-release]
+    if: always() && needs.github-release.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || (needs.version-pr.result == 'success' && needs.version-pr.outputs.tagged == 'true'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -111,7 +131,6 @@ jobs:
         id: meta
         run: |
           echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -121,7 +140,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ steps.meta.outputs.image }}:latest
-            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.image }}:${{ needs.github-release.outputs.version }}
             ${{ steps.meta.outputs.image }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -129,8 +148,8 @@ jobs:
   # ── Deploy to Scaleway ─────────────────────────────────────────────────────
   deploy:
     name: Deploy to Scaleway
-    needs: docker
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [version-pr, github-release, docker]
+    if: always() && needs.docker.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || (needs.version-pr.result == 'success' && needs.version-pr.outputs.tagged == 'true'))
     runs-on: ubuntu-latest
     environment: production
     env:
