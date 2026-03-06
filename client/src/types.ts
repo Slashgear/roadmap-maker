@@ -1,5 +1,6 @@
 declare global {
   const __APP_VERSION__: string
+  const __APP_MODE__: string
 }
 
 export type TaskStatus = 'confirmed' | 'started' | 'pending' | 'critical' | 'done'
@@ -29,6 +30,7 @@ export interface Task {
   note?: string
   externalLink?: string
   position: number
+  version?: number
 }
 
 export interface Section {
@@ -38,6 +40,7 @@ export interface Section {
   color: SectionColor
   position: number
   tasks: Task[]
+  version?: number
 }
 
 export interface Roadmap {
@@ -48,6 +51,7 @@ export interface Roadmap {
   startDate: string
   endDate: string
   sections: Section[]
+  version?: number
 }
 
 export const SECTION_COLORS: SectionColor[] = [

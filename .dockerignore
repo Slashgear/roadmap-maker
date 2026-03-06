@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+public
+public-team
+dist
+.env
+*.db
+*.sqlite
+server/__mocks__
+server/api/openapi.test.ts
+vitest.config.ts

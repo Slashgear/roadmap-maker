@@ -1,5 +1,6 @@
 node_modules/
 public
+public-team
 !client/public
 data/
 .env
@@ -8,3 +9,5 @@ data/
 dist/
 .DS_Store
 client/src/vite-env.d.ts
+playwright-report/
+test-results/

@@ -5,16 +5,13 @@ COPY package.json bun.lockb* ./
 RUN bun install
 
 COPY . .
-RUN bun run build
+RUN VITE_APP_MODE=team bun run build:team
 
 # Pre-compress all compressible assets
-# - zopfli: better gzip (.gz) — slower to compress, faster to decompress than standard gzip
-# - brotli: best quality (.br)
-# - zstd: ultra compression (.zst)
 RUN apt-get update -qq \
   && apt-get install -y --no-install-recommends brotli zstd zopfli \
   && rm -rf /var/lib/apt/lists/* \
-  && find /app/public -type f \( \
+  && find /app/public-team -type f \( \
        -name "*.js" -o -name "*.css" -o -name "*.html" \
        -o -name "*.svg" -o -name "*.json" \
        -o -name "*.woff2" -o -name "*.woff" \
@@ -28,16 +25,25 @@ FROM oven/bun:1-slim
 WORKDIR /app
 
 # Copy files owned by the non-root 'bun' user (UID 1000, provided by the base image)
-COPY --from=builder --chown=bun:bun /app/public ./public
+COPY --from=builder --chown=bun:bun /app/public-team ./public
 COPY --from=builder --chown=bun:bun /app/server ./server
 COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
-COPY --from=builder --chown=bun:bun /app/package.json ./package.json
+COPY --from=builder --chown=bun:bun /app/package.json ./
+
+# Create the data directory and give ownership to the bun user before declaring the volume
+# (VOLUME would freeze permissions if chown came after)
+RUN mkdir -p /data && chown bun:bun /data
+VOLUME /data
 
 USER bun
 
 EXPOSE 8080
 
+ENV STORAGE=sqlite
+ENV DB_PATH=/data/roadmaps.db
+# AUTH_TOKEN must be provided at runtime: docker run -e AUTH_TOKEN=... roadmap-maker-team
+
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD bun -e "fetch('http://localhost:' + (process.env.PORT||8080) + '/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD bun -e "fetch('http://localhost:' + (process.env.PORT||8080) + '/api/me').then(r=>process.exit(r.status===401||r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["bun", "run", "server/index.ts"]

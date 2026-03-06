@@ -691,7 +691,15 @@ function EmptyState({
             <h4 className="font-medium text-violet-200 mb-1.5">No account, no server</h4>
             <p className="text-sm text-gray-400">
               Everything is stored locally in your browser. No signup, no backend, no data sent
-              anywhere.
+              anywhere. Need team collaboration?{' '}
+              <a
+                href="https://github.com/Slashgear/roadmap-maker#team-mode"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-300 hover:text-violet-100 underline"
+              >
+                Try the team mode.
+              </a>
             </p>
           </div>
           <div className="bg-white/5 rounded-lg p-4 border border-violet-500/20">

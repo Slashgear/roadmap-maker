@@ -13,6 +13,7 @@ export const TaskSchema = z.object({
   note: z.optional(z.string()),
   externalLink: z.optional(z.string().check(z.url())),
   position: z.number(),
+  version: z.optional(z.number()),
 })
 
 export const SectionSchema = z.object({
@@ -35,6 +36,7 @@ export const SectionSchema = z.object({
   ]),
   position: z.number(),
   tasks: z.array(TaskSchema),
+  version: z.optional(z.number()),
 })
 
 export const RoadmapSchema = z.object({
@@ -45,4 +47,5 @@ export const RoadmapSchema = z.object({
   startDate: isoDate,
   endDate: isoDate,
   sections: z.array(SectionSchema),
+  version: z.optional(z.number()),
 })

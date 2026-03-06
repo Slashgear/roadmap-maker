@@ -4,6 +4,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import { readFileSync } from 'fs'
 
 const { version } = JSON.parse(readFileSync('./package.json', 'utf-8')) as { version: string }
+const appMode = process.env.VITE_APP_MODE ?? 'static'
 
 export default defineConfig({
   root: 'client',
@@ -16,6 +17,7 @@ export default defineConfig({
   },
   define: {
     __APP_VERSION__: JSON.stringify(version),
+    __APP_MODE__: JSON.stringify(appMode),
   },
   plugins: [
     preact(),

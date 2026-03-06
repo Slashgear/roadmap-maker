@@ -1,8 +1,6 @@
 # roadmap-maker
 
-**Gantt roadmap builder — 100% static, no backend, no database**
-
-Data lives in your browser (`localStorage`) and can be exported/imported as JSON files.
+**Gantt roadmap builder** — static (localStorage) or team (SQLite + real-time SSE)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](./LICENSE)
 [![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646cff)](https://vitejs.dev)
@@ -10,8 +8,12 @@ Data lives in your browser (`localStorage`) and can be exported/imported as JSON
 
 ![](./client/public/og-image.png)
 
-> [!WARNING]
-> This tool is currently designed for **single-user use only**. Data is stored in your browser's `localStorage` — it is not shared between devices or users. Real-time collaborative editing is not supported: if multiple people open the same roadmap JSON, their changes will not be synchronized. For now, use the Export/Import flow to share a roadmap snapshot with your team.
+Two build modes:
+
+| Mode                 | Storage                       | Use case                            |
+| -------------------- | ----------------------------- | ----------------------------------- |
+| **Static** (default) | `localStorage` in the browser | Personal use, no server needed      |
+| **Team**             | SQLite on the server + SSE    | Team use, changes sync in real-time |
 
 ---
 
@@ -235,29 +237,74 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
 
 ## Stack
 
-|                     | Technology                                                                |
-| ------------------- | ------------------------------------------------------------------------- |
-| Frontend            | [Preact](https://preactjs.com) + [TypeScript](https://typescriptlang.org) |
-| Bundler             | [Vite](https://vitejs.dev)                                                |
-| Styles              | [Tailwind CSS](https://tailwindcss.com)                                   |
-| Validation          | [Zod](https://zod.dev)                                                    |
-| Runtime (build)     | [Bun](https://bun.sh)                                                     |
-| Server (production) | [Caddy](https://caddyserver.com) (static files)                           |
+|                  | Technology                                                                |
+| ---------------- | ------------------------------------------------------------------------- |
+| Frontend         | [Preact](https://preactjs.com) + [TypeScript](https://typescriptlang.org) |
+| Bundler          | [Vite](https://vitejs.dev)                                                |
+| Styles           | [Tailwind CSS](https://tailwindcss.com)                                   |
+| Validation       | [Zod](https://zod.dev)                                                    |
+| Runtime / build  | [Bun](https://bun.sh)                                                     |
+| Server           | [Hono](https://hono.dev) (static serving + team API)                      |
+| DB (team mode)   | SQLite via `bun:sqlite` (WAL, FK, optimistic locking)                     |
+| Real-time (team) | Server-Sent Events (SSE)                                                  |
+| Tests            | [Vitest](https://vitest.dev)                                              |
+
+---
+
+## Team mode
+
+The team build adds a REST API backed by SQLite and a real-time SSE stream. Multiple users can edit the same roadmap simultaneously — changes propagate to all connected clients within ~50 ms.
+
+### How it works
+
+- **Auth**: shared `AUTH_TOKEN` env var → session cookie (HttpOnly, 24h TTL)
+- **Persistence**: SQLite with WAL mode and foreign key cascades
+- **Optimistic locking**: every entity has a `version` integer; PUT requests must include the current version. A mismatch returns `409 Conflict` with the server's current state.
+- **Real-time**: `GET /api/roadmaps/:slug/events` is an SSE stream. Every mutation broadcasts a typed event (`task_added`, `section_updated`…) to all connected clients.
+- **API docs**: Swagger UI at `/api/docs` (OpenAPI 3.0 spec at `/api/openapi.json`)
+
+### Build & run
+
+```bash
+# 1. Build the team frontend
+bun run build:team          # outputs to ./public-team
+
+# 2. Start the server with SQLite mode
+AUTH_TOKEN=my-secret STORAGE=sqlite bun run server:team
+# → http://localhost:8080 — enter token "my-secret" to sign in
+```
+
+### Docker (team)
+
+```bash
+docker build -f Dockerfile.team -t roadmap-maker-team .
+docker run -p 8080:8080 \
+  -e AUTH_TOKEN=my-secret \
+  -v roadmap-data:/data \
+  roadmap-maker-team
+```
+
+The SQLite database is persisted in the `/data` volume (`/data/roadmaps.db`).
 
 ---
 
 ## Deployment
 
-### Docker (self-hosted VPS)
+### Docker — static mode (default)
 
 ```bash
 docker build -t roadmap-maker .
 docker run -p 8080:8080 roadmap-maker
-# or map to port 80:
-docker run -p 80:8080 roadmap-maker
 ```
 
-### Fly.io
+### Docker — team mode
+
+```bash
+docker build -f Dockerfile.team -t roadmap-maker-team .
+docker run -p 8080:8080 -e AUTH_TOKEN=secret -v data:/data roadmap-maker-team
+```
+
+### Fly.io (static mode)
 
 ```bash
 # Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
@@ -265,8 +312,6 @@ fly auth login
 fly launch   # detects the Dockerfile, prompts for app name & region
 fly deploy   # build & push image, then open https://<app-name>.fly.dev
 ```
-
-Fly.io builds the Docker image on their infrastructure — no local build needed after the first `fly launch`.
 
 ### Any static host (Netlify / Vercel / Cloudflare Pages)
 
