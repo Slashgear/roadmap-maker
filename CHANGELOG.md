@@ -1,5 +1,11 @@
 # @slashgear/roadmap-maker
 
+## 1.5.3
+
+### Patch Changes
+
+- 97e88ce: Replace Caddy with a Hono static file server (`server/`). Supports precompressed assets (br/zstd/gzip), immutable cache headers for versioned assets, and security headers.
+
 ## 1.5.2
 
 ### Patch Changes
