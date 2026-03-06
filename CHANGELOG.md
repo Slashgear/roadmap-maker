@@ -1,5 +1,11 @@
 # @slashgear/roadmap-maker
 
+## 1.5.2
+
+### Patch Changes
+
+- cc3b4d1: Move OG image to client/public for proper Vite static asset handling, update .gitignore accordingly.
+
 ## 1.5.1
 
 ### Patch Changes
