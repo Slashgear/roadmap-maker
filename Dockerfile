@@ -24,7 +24,13 @@ RUN apt-get update -qq \
        zstd --ultra -22 --keep -q "$f"; \
      done
 
-FROM caddy:alpine
-COPY --from=builder /app/public /srv
-COPY Caddyfile /etc/caddy/Caddyfile
+FROM oven/bun:1-slim
+WORKDIR /app
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
 EXPOSE 8080
+CMD ["bun", "run", "server/index.ts"]

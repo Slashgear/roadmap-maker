@@ -12,6 +12,7 @@
     "lint:fix": "oxlint --fix client",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
+    "server": "bun run server/index.ts",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource/dm-mono": "^5.2.7",
+    "hono": "^4.12.5",
     "html-to-image": "^1.11.13",
     "nanoid": "^5.0.0",
     "preact": "^10.28.4",
