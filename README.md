@@ -8,6 +8,8 @@ Data lives in your browser (`localStorage`) and can be exported/imported as JSON
 [![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646cff)](https://vitejs.dev)
 [![Preact](https://img.shields.io/badge/Preact-10-673ab8)](https://preactjs.com)
 
+![](./client/public/og-image.png)
+
 > [!WARNING]
 > This tool is currently designed for **single-user use only**. Data is stored in your browser's `localStorage` — it is not shared between devices or users. Real-time collaborative editing is not supported: if multiple people open the same roadmap JSON, their changes will not be synchronized. For now, use the Export/Import flow to share a roadmap snapshot with your team.
 
