@@ -174,11 +174,18 @@ export default function AppTeam() {
 
   useEffect(() => {
     if (!moreOpen) return
-    function handler(e: MouseEvent) {
+    function onMouse(e: MouseEvent) {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', onMouse)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onMouse)
+      document.removeEventListener('keydown', onKeyDown)
+    }
   }, [moreOpen])
 
   // ── Auth check ──────────────────────────────────────────────────────────────
@@ -595,83 +602,68 @@ export default function AppTeam() {
                 </Btn>
               )}
 
-              {/* Secondary actions — desktop */}
-              {roadmap && (
-                <div className="hidden sm:flex gap-2">
-                  <Btn onClick={() => setModal({ type: 'edit-roadmap' })} variant="ghost">
-                    ⚙ Settings
-                  </Btn>
-                  <Btn onClick={handleExport} variant="ghost">
-                    Export
-                  </Btn>
-                  <Btn onClick={handleExportPng} variant="ghost">
-                    Export PNG
-                  </Btn>
-                  <Btn onClick={() => void handleExportSvg()} variant="ghost">
-                    Export SVG
-                  </Btn>
-                  <Btn onClick={() => fileInputRef.current?.click()} variant="ghost">
-                    Import
-                  </Btn>
-                </div>
-              )}
-
-              {/* Secondary actions — mobile dropdown */}
-              <div ref={moreRef} className="relative sm:hidden">
-                <Btn onClick={() => setMoreOpen((o) => !o)} variant="ghost">
+              {/* Unified dropdown */}
+              <div ref={moreRef} className="relative">
+                <button
+                  onClick={() => setMoreOpen((o) => !o)}
+                  aria-expanded={moreOpen}
+                  aria-haspopup="menu"
+                  aria-label="More actions"
+                  className="border border-app-border bg-transparent text-gray-300 rounded-lg px-3.5 py-1.5 text-[13px] font-medium cursor-pointer whitespace-nowrap hover:text-app-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                >
                   ···
-                </Btn>
+                </button>
                 {moreOpen && (
-                  <div className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 overflow-hidden min-w-[180px]">
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 py-1 min-w-[200px]"
+                  >
                     {roadmap && (
                       <>
-                        <button
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             setModal({ type: 'edit-roadmap' })
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
-                          ⚙ Settings
-                        </button>
-                        <button
+                          Settings
+                        </DropdownItem>
+                        <DropdownSeparator />
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             handleExport()
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
                           Export JSON
-                        </button>
-                        <button
+                        </DropdownItem>
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             void handleExportPng()
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
                           Export PNG
-                        </button>
-                        <button
+                        </DropdownItem>
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             void handleExportSvg()
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
                           Export SVG
-                        </button>
-                        <button
-                          onClick={() => {
-                            setMoreOpen(false)
-                            fileInputRef.current?.click()
-                          }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border last:border-0 cursor-pointer bg-transparent"
-                        >
-                          Import JSON
-                        </button>
+                        </DropdownItem>
+                        <DropdownSeparator />
                       </>
                     )}
+                    <DropdownItem
+                      onClick={() => {
+                        setMoreOpen(false)
+                        fileInputRef.current?.click()
+                      }}
+                    >
+                      Import JSON
+                    </DropdownItem>
                   </div>
                 )}
               </div>
@@ -884,6 +876,22 @@ function Btn({
       {children}
     </button>
   )
+}
+
+function DropdownItem({ children, onClick }: { children: ComponentChildren; onClick: () => void }) {
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      className="w-full text-left px-4 py-2.5 text-[13px] text-app-text hover:bg-white/5 cursor-pointer bg-transparent flex flex-col focus-visible:outline-none focus-visible:bg-white/5"
+    >
+      {children}
+    </button>
+  )
+}
+
+function DropdownSeparator() {
+  return <div role="separator" className="h-px bg-app-border my-1 mx-2" />
 }
 
 function PresenceAvatars({
