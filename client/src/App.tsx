@@ -24,6 +24,7 @@ import TaskModal from './components/TaskModal'
 import SectionModal from './components/SectionModal'
 import RoadmapModal from './components/RoadmapModal'
 import ViewRangeControls from './components/ViewRangeControls'
+import { getSharedParam, decodeSharedRoadmap, buildShareUrl } from './shareUrl'
 
 type ModalState =
   | { type: 'create-roadmap' }
@@ -101,6 +102,7 @@ export default function App() {
   const [importError, setImportError] = useState('')
   const [examplesOpen, setExamplesOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [copyDone, setCopyDone] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const examplesRef = useRef<HTMLDivElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
@@ -138,6 +140,35 @@ export default function App() {
     const { start, end } = defaultViewDates()
     setViewStart(start)
     setViewEnd(end)
+  }
+
+  // ── Shared URL import ─────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const param = getSharedParam()
+    if (!param) return
+    void decodeSharedRoadmap(param).then((imported) => {
+      if (!imported) return
+      setRoadmaps((prev) => {
+        const without = prev.filter((r) => r.slug !== imported.slug)
+        const updated = [...without, imported]
+        save(updated)
+        return updated
+      })
+      setRoadmap(imported)
+      const url = new URL(window.location.href)
+      url.search = ''
+      url.hash = '#' + imported.slug
+      window.history.replaceState({}, '', url.toString())
+    })
+  }, [])
+
+  async function handleCopyLink() {
+    if (!roadmap) return
+    const url = await buildShareUrl(roadmap)
+    await navigator.clipboard.writeText(url)
+    setCopyDone(true)
+    setTimeout(() => setCopyDone(false), 2000)
   }
 
   // ── Roadmap handlers ──────────────────────────────────────────────────────
@@ -438,6 +469,9 @@ export default function App() {
                     <Btn onClick={() => setModal({ type: 'edit-roadmap' })} variant="ghost">
                       ⚙ Settings
                     </Btn>
+                    <Btn onClick={() => void handleCopyLink()} variant="ghost">
+                      {copyDone ? 'Copied!' : 'Copy link'}
+                    </Btn>
                     <Btn onClick={handleExport} variant="ghost">
                       Export
                     </Btn>
@@ -489,6 +523,15 @@ export default function App() {
                           className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
                           ⚙ Settings
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            void handleCopyLink()
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                        >
+                          {copyDone ? 'Copied!' : 'Copy link'}
                         </button>
                         <button
                           onClick={() => {
