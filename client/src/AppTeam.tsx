@@ -116,6 +116,8 @@ export default function AppTeam() {
   const [modal, setModal] = useState<ModalState>(null)
   const [viewStart, setViewStart] = useState(() => defaultViewDates().start)
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
+  const [importError, setImportError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ── Auth check ──────────────────────────────────────────────────────────────
 
@@ -362,6 +364,56 @@ export default function AppTeam() {
     }
   }
 
+  // ── Import ──────────────────────────────────────────────────────────────────
+
+  async function handleImport(file: File) {
+    setImportError('')
+    try {
+      const text = await file.text()
+      const json = JSON.parse(text)
+      const { RoadmapSchema } = await import('./schemas')
+      const result = RoadmapSchema.safeParse(json)
+      if (!result.success) {
+        setImportError('Invalid roadmap file: ' + result.error.issues[0]?.message)
+        return
+      }
+      const imported = result.data as Roadmap
+      const { data: created } = await api.post<Roadmap>('/roadmaps', {
+        title: imported.title,
+        subtitle: imported.subtitle ?? null,
+        startDate: imported.startDate,
+        endDate: imported.endDate,
+        slug: imported.slug,
+      })
+      if (!created) {
+        setImportError('Failed to create roadmap. The slug may already exist.')
+        return
+      }
+      for (const section of imported.sections) {
+        const { data: createdSection } = await api.post<Section>(
+          `/roadmaps/${created.slug}/sections`,
+          { label: section.label, color: section.color },
+        )
+        if (!createdSection) continue
+        for (const task of section.tasks) {
+          await api.post(`/roadmaps/${created.slug}/sections/${createdSection.id}/tasks`, {
+            label: task.label,
+            startDate: task.startDate,
+            endDate: task.endDate,
+            status: task.status,
+            type: task.type,
+            note: task.note ?? null,
+            externalLink: task.externalLink ?? null,
+          })
+        }
+      }
+      setRoadmaps((list) => [...list, created])
+      await loadRoadmap(created.slug)
+    } catch {
+      setImportError('Failed to parse JSON file')
+    }
+  }
+
   function resetView() {
     const { start, end } = defaultViewDates()
     setViewStart(start)
@@ -451,6 +503,20 @@ export default function AppTeam() {
                   </Btn>
                 </>
               )}
+              <Btn onClick={() => fileInputRef.current?.click()} variant="ghost">
+                Import
+              </Btn>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.currentTarget.files?.[0]
+                  if (file) void handleImport(file)
+                  e.currentTarget.value = ''
+                }}
+              />
               <Btn
                 onClick={() => setModal({ type: 'create-roadmap' })}
                 variant="primary"
@@ -460,6 +526,19 @@ export default function AppTeam() {
               </Btn>
             </div>
           </div>
+
+          {/* Import error */}
+          {importError && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-[13px] text-red-400">
+              {importError}
+              <button
+                onClick={() => setImportError('')}
+                className="ml-auto cursor-pointer bg-transparent border-none text-red-400 hover:text-red-200"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Legend */}
           {roadmap && (
