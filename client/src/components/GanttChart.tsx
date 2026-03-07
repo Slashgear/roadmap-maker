@@ -1,9 +1,18 @@
-import { useMemo } from 'preact/hooks'
+import { useMemo, useState, useEffect } from 'preact/hooks'
 import type { Roadmap, Section, Task } from '../types'
 import { COLOR_HEX, SECTION_BG, STATUS_COLOR, STATUS_LABEL, STATUS_TEXT } from '../types'
 
-const LABEL_W = 240
 const MIN_CHART_W = 700
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
 const ROW_H = 34
 const SECTION_H = 32
 const HEADER_H = 48
@@ -63,6 +72,8 @@ export default function GanttChart({
   onAddTask,
   onEditTask,
 }: Props) {
+  const isMobile = useIsMobile()
+  const labelW = isMobile ? 140 : 240
   const start = useMemo(() => new Date(viewStart), [viewStart])
   const end = useMemo(() => new Date(viewEnd), [viewEnd])
   const totalMs = end.getTime() - start.getTime()
@@ -118,8 +129,8 @@ export default function GanttChart({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: `${LABEL_W}px 1fr`,
-            minWidth: LABEL_W + MIN_CHART_W,
+            gridTemplateColumns: `${labelW}px 1fr`,
+            minWidth: labelW + MIN_CHART_W,
           }}
         >
           {/* ── Header ── */}

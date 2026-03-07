@@ -117,7 +117,18 @@ export default function AppTeam() {
   const [viewStart, setViewStart] = useState(() => defaultViewDates().start)
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
+  const [moreOpen, setMoreOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const moreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!moreOpen) return
+    function handler(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [moreOpen])
 
   // ── Auth check ──────────────────────────────────────────────────────────────
 
@@ -442,7 +453,7 @@ export default function AppTeam() {
       >
         Skip to chart
       </a>
-      <div className="px-6 pt-8 pb-20 min-h-screen">
+      <div className="px-3 pt-6 pb-20 min-h-screen sm:px-6 sm:pt-8">
         <main className="max-w-[1200px] mx-auto">
           {/* Top bar */}
           <div className="flex items-start justify-between mb-7 gap-4 flex-wrap">
@@ -484,14 +495,18 @@ export default function AppTeam() {
             {/* Actions */}
             <div className="flex gap-2 shrink-0 flex-wrap">
               {roadmap && (
-                <>
-                  <Btn
-                    onClick={() => setModal({ type: 'add-section' })}
-                    variant="secondary"
-                    testId="btn-new-section"
-                  >
-                    + Section
-                  </Btn>
+                <Btn
+                  onClick={() => setModal({ type: 'add-section' })}
+                  variant="secondary"
+                  testId="btn-new-section"
+                >
+                  + Section
+                </Btn>
+              )}
+
+              {/* Secondary actions — desktop */}
+              {roadmap && (
+                <div className="hidden sm:flex gap-2">
                   <Btn onClick={() => setModal({ type: 'edit-roadmap' })} variant="ghost">
                     ⚙ Settings
                   </Btn>
@@ -501,11 +516,63 @@ export default function AppTeam() {
                   <Btn onClick={handleExportPng} variant="ghost">
                     Export PNG
                   </Btn>
-                </>
+                  <Btn onClick={() => fileInputRef.current?.click()} variant="ghost">
+                    Import
+                  </Btn>
+                </div>
               )}
-              <Btn onClick={() => fileInputRef.current?.click()} variant="ghost">
-                Import
-              </Btn>
+
+              {/* Secondary actions — mobile dropdown */}
+              <div ref={moreRef} className="relative sm:hidden">
+                <Btn onClick={() => setMoreOpen((o) => !o)} variant="ghost">
+                  ···
+                </Btn>
+                {moreOpen && (
+                  <div className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 overflow-hidden min-w-[180px]">
+                    {roadmap && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            setModal({ type: 'edit-roadmap' })
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                        >
+                          ⚙ Settings
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            handleExport()
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                        >
+                          Export JSON
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            void handleExportPng()
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                        >
+                          Export PNG
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            fileInputRef.current?.click()
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border last:border-0 cursor-pointer bg-transparent"
+                        >
+                          Import JSON
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <input
                 ref={fileInputRef}
                 type="file"

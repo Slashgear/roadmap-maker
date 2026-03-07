@@ -99,8 +99,19 @@ export default function App() {
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
   const [examplesOpen, setExamplesOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const examplesRef = useRef<HTMLDivElement>(null)
+  const moreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!moreOpen) return
+    function handler(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [moreOpen])
 
   useEffect(() => {
     if (!examplesOpen) return
@@ -361,7 +372,7 @@ export default function App() {
       >
         Skip to chart
       </a>
-      <div className="px-6 pt-8 pb-20 min-h-screen">
+      <div className="px-3 pt-6 pb-20 min-h-screen sm:px-6 sm:pt-8">
         <main className="max-w-[1200px] mx-auto">
           {/* Top bar */}
           <div className="flex items-start justify-between mb-7 gap-4 flex-wrap">
@@ -408,34 +419,106 @@ export default function App() {
             {/* Actions */}
             <div className="flex gap-2 shrink-0 flex-wrap">
               {roadmap && (
-                <>
-                  <Btn onClick={() => setModal({ type: 'add-section' })} variant="secondary">
-                    + Section
-                  </Btn>
-                  <Btn onClick={() => setModal({ type: 'edit-roadmap' })} variant="ghost">
-                    ⚙ Settings
-                  </Btn>
-                  <Btn onClick={handleExport} variant="ghost">
-                    Export
-                  </Btn>
-                  <Btn onClick={handleExportPng} variant="ghost">
-                    Export PNG
-                  </Btn>
-                </>
-              )}
-              <Btn onClick={() => fileInputRef.current?.click()} variant="ghost">
-                Import
-              </Btn>
-              <div ref={examplesRef} className="relative">
-                <Btn onClick={() => setExamplesOpen((o) => !o)} variant="ghost">
-                  Examples
+                <Btn onClick={() => setModal({ type: 'add-section' })} variant="secondary">
+                  + Section
                 </Btn>
-                {examplesOpen && (
-                  <div className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 overflow-hidden min-w-[220px]">
+              )}
+
+              {/* Secondary actions — desktop */}
+              <div className="hidden sm:flex gap-2">
+                {roadmap && (
+                  <>
+                    <Btn onClick={() => setModal({ type: 'edit-roadmap' })} variant="ghost">
+                      ⚙ Settings
+                    </Btn>
+                    <Btn onClick={handleExport} variant="ghost">
+                      Export
+                    </Btn>
+                    <Btn onClick={handleExportPng} variant="ghost">
+                      Export PNG
+                    </Btn>
+                  </>
+                )}
+                <Btn onClick={() => fileInputRef.current?.click()} variant="ghost">
+                  Import
+                </Btn>
+                <div ref={examplesRef} className="relative">
+                  <Btn onClick={() => setExamplesOpen((o) => !o)} variant="ghost">
+                    Examples
+                  </Btn>
+                  {examplesOpen && (
+                    <div className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 overflow-hidden min-w-[220px]">
+                      {EXAMPLES.map((ex) => (
+                        <button
+                          key={ex.slug}
+                          onClick={() => void handleLoadExample(ex.slug)}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border last:border-0 cursor-pointer bg-transparent"
+                        >
+                          <div className="font-medium">{ex.title}</div>
+                          {ex.subtitle && (
+                            <div className="text-[11px] text-gray-400 mt-0.5">{ex.subtitle}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Secondary actions — mobile dropdown */}
+              <div ref={moreRef} className="relative sm:hidden">
+                <Btn onClick={() => setMoreOpen((o) => !o)} variant="ghost">
+                  ···
+                </Btn>
+                {moreOpen && (
+                  <div className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 overflow-hidden min-w-[180px]">
+                    {roadmap && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            setModal({ type: 'edit-roadmap' })
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                        >
+                          ⚙ Settings
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            handleExport()
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                        >
+                          Export JSON
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMoreOpen(false)
+                            void handleExportPng()
+                          }}
+                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                        >
+                          Export PNG
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => {
+                        setMoreOpen(false)
+                        fileInputRef.current?.click()
+                      }}
+                      className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
+                    >
+                      Import JSON
+                    </button>
                     {EXAMPLES.map((ex) => (
                       <button
                         key={ex.slug}
-                        onClick={() => void handleLoadExample(ex.slug)}
+                        onClick={() => {
+                          setMoreOpen(false)
+                          void handleLoadExample(ex.slug)
+                        }}
                         className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border last:border-0 cursor-pointer bg-transparent"
                       >
                         <div className="font-medium">{ex.title}</div>
@@ -447,6 +530,7 @@ export default function App() {
                   </div>
                 )}
               </div>
+
               <Btn onClick={() => setModal({ type: 'create-roadmap' })} variant="primary">
                 + Roadmap
               </Btn>
