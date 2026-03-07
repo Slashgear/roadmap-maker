@@ -81,6 +81,16 @@ export default function GanttChart({
   onEditTask,
 }: Props) {
   const isMobile = useIsMobile()
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  function toggleCollapsed(id: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
   const labelW = isMobile ? 140 : 240
   const start = useMemo(() => new Date(viewStart), [viewStart])
   const end = useMemo(() => new Date(viewEnd), [viewEnd])
@@ -200,174 +210,224 @@ export default function GanttChart({
           </div>
 
           {/* ── Sections ── */}
-          {roadmap.sections.map((section) => (
-            <>
-              {/* Section header row */}
-              <button
-                className={`${STICKY} w-full flex items-center gap-2 px-3.5 text-[11px] font-bold uppercase tracking-[.07em] cursor-pointer select-none border-b border-r border-app-border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500`}
-                style={{
-                  height: SECTION_H,
-                  background: SECTION_BG[section.color] ?? SECTION_BG.green,
-                }}
-                onClick={() => onEditSection(section)}
-                aria-label={`Edit section: ${section.label}`}
-              >
-                <span
-                  className="inline-block w-2 h-2 rounded-full shrink-0"
-                  style={{ background: COLOR_HEX[section.color] ?? COLOR_HEX.green }}
-                />
-                <span style={{ color: COLOR_HEX[section.color] ?? COLOR_HEX.green }}>
-                  {section.label}
-                </span>
-              </button>
-              <div
-                className="relative overflow-hidden border-b border-app-border"
-                style={{
-                  height: SECTION_H,
-                  background: SECTION_BG[section.color] ?? SECTION_BG.green,
-                }}
-                aria-hidden="true"
-              >
-                <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
-              </div>
-
-              {/* Task rows */}
-              {section.tasks.map((task) => {
-                const taskStart = new Date(task.startDate)
-                const taskEnd = new Date(task.endDate)
-                const left = pct(taskStart)
-                const width = Math.max(pct(taskEnd) - left, 0.8)
-                const color = STATUS_COLOR[task.status]
-                const textColor = STATUS_TEXT[task.status]
-                const isPending = task.status === 'pending'
-
-                const { background: barBg, border: barBorder } = getBarStyle(task.status, color)
-                const barColor = isPending ? color : textColor
-                const { background: diamondBg, border: diamondBorder } = getDiamondStyle(
-                  task.status,
-                  color,
-                )
-
-                return (
-                  <>
-                    <button
-                      className={`${STICKY} w-full flex items-center gap-1.5 pr-2 pl-[22px] text-[12.5px] text-app-text bg-app-surface border-r border-b border-app-border text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500`}
-                      style={{ height: ROW_H }}
-                      onClick={() => onEditTask(task)}
-                      aria-label={[
-                        task.label,
-                        STATUS_LABEL[task.type][task.status],
-                        `${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}`,
-                        task.note ? `Note: ${task.note}` : null,
-                        task.externalLink ? `Link: ${task.externalLink}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' — ')}
-                    >
-                      <span className="truncate flex-1">{task.label}</span>
-                      {task.externalLink && (
-                        <a
-                          href={task.externalLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          title={task.externalLink}
-                          aria-label="Open external link"
-                          className="shrink-0 text-gray-500 hover:text-violet-400 transition-colors"
-                        >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7"
-                              stroke="currentColor"
-                              stroke-width="1.25"
-                              stroke-linecap="round"
-                            />
-                            <path
-                              d="M7.5 1H11v3.5M11 1 6 6"
-                              stroke="currentColor"
-                              stroke-width="1.25"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-                          </svg>
-                        </a>
-                      )}
-                    </button>
-                    <div
-                      className="relative overflow-hidden border-b border-app-border cursor-pointer"
+          {roadmap.sections.map((section) => {
+            const isCollapsed = collapsed.has(section.id)
+            return (
+              <>
+                {/* Section header row */}
+                <div
+                  className={`${STICKY} flex items-center border-b border-r border-app-border`}
+                  style={{
+                    height: SECTION_H,
+                    background: SECTION_BG[section.color] ?? SECTION_BG.green,
+                  }}
+                >
+                  <button
+                    onClick={() => toggleCollapsed(section.id)}
+                    aria-expanded={!isCollapsed}
+                    aria-label={
+                      isCollapsed
+                        ? `Expand section ${section.label}`
+                        : `Collapse section ${section.label}`
+                    }
+                    className="flex items-center justify-center w-7 h-full shrink-0 text-gray-500 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"
+                  >
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      aria-hidden="true"
                       style={{
-                        height: ROW_H,
-                        background: SECTION_BG[section.color] ?? 'transparent',
+                        transform: isCollapsed ? 'none' : 'rotate(90deg)',
+                        transition: 'transform 150ms',
                       }}
-                      onClick={() => onEditTask(task)}
+                    >
+                      <path
+                        d="M3 1.5l4 3.5-4 3.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => onEditSection(section)}
+                    aria-label={`Edit section: ${section.label}`}
+                    className="flex-1 flex items-center gap-2 pr-3 h-full text-[11px] font-bold uppercase tracking-[.07em] cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"
+                  >
+                    <span
+                      className="inline-block w-2 h-2 rounded-full shrink-0"
+                      style={{ background: COLOR_HEX[section.color] ?? COLOR_HEX.green }}
+                    />
+                    <span style={{ color: COLOR_HEX[section.color] ?? COLOR_HEX.green }}>
+                      {section.label}
+                    </span>
+                    {isCollapsed && section.tasks.length > 0 && (
+                      <span className="text-[10px] text-gray-500 font-normal normal-case tracking-normal">
+                        ({section.tasks.length})
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <div
+                  className="relative overflow-hidden border-b border-app-border"
+                  style={{
+                    height: SECTION_H,
+                    background: SECTION_BG[section.color] ?? SECTION_BG.green,
+                  }}
+                  aria-hidden="true"
+                >
+                  <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
+                </div>
+
+                {/* Task rows */}
+                {!isCollapsed &&
+                  section.tasks.map((task) => {
+                    const taskStart = new Date(task.startDate)
+                    const taskEnd = new Date(task.endDate)
+                    const left = pct(taskStart)
+                    const width = Math.max(pct(taskEnd) - left, 0.8)
+                    const color = STATUS_COLOR[task.status]
+                    const textColor = STATUS_TEXT[task.status]
+                    const isPending = task.status === 'pending'
+
+                    const { background: barBg, border: barBorder } = getBarStyle(task.status, color)
+                    const barColor = isPending ? color : textColor
+                    const { background: diamondBg, border: diamondBorder } = getDiamondStyle(
+                      task.status,
+                      color,
+                    )
+
+                    return (
+                      <>
+                        <button
+                          className={`${STICKY} w-full flex items-center gap-1.5 pr-2 pl-[22px] text-[12.5px] text-app-text bg-app-surface border-r border-b border-app-border text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500`}
+                          style={{ height: ROW_H }}
+                          onClick={() => onEditTask(task)}
+                          aria-label={[
+                            task.label,
+                            STATUS_LABEL[task.type][task.status],
+                            `${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}`,
+                            task.note ? `Note: ${task.note}` : null,
+                            task.externalLink ? `Link: ${task.externalLink}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' — ')}
+                        >
+                          <span className="truncate flex-1">{task.label}</span>
+                          {task.externalLink && (
+                            <a
+                              href={task.externalLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              title={task.externalLink}
+                              aria-label="Open external link"
+                              className="shrink-0 text-gray-500 hover:text-violet-400 transition-colors"
+                            >
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 12 12"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7"
+                                  stroke="currentColor"
+                                  stroke-width="1.25"
+                                  stroke-linecap="round"
+                                />
+                                <path
+                                  d="M7.5 1H11v3.5M11 1 6 6"
+                                  stroke="currentColor"
+                                  stroke-width="1.25"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            </a>
+                          )}
+                        </button>
+                        <div
+                          className="relative overflow-hidden border-b border-app-border cursor-pointer"
+                          style={{
+                            height: ROW_H,
+                            background: SECTION_BG[section.color] ?? 'transparent',
+                          }}
+                          onClick={() => onEditTask(task)}
+                          aria-hidden="true"
+                        >
+                          <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
+
+                          {task.type === 'milestone' ? (
+                            <div
+                              className="hover:brightness-125 transition-[filter] duration-150 absolute top-1/2 -translate-y-1/2 rotate-45 rounded-[2px] z-[5]"
+                              style={{
+                                width: 14,
+                                height: 14,
+                                left: `calc(${left}% - 7px)`,
+                                background: diamondBg,
+                                border: diamondBorder,
+                              }}
+                              title={task.label}
+                            />
+                          ) : (
+                            <div
+                              className="hover:brightness-125 transition-[filter] duration-150 absolute top-1/2 -translate-y-1/2 rounded-[4px] flex items-center px-2 text-[10.5px] font-medium whitespace-nowrap overflow-hidden z-[5]"
+                              style={{
+                                height: 20,
+                                left: `${left}%`,
+                                width: `${width}%`,
+                                background: barBg,
+                                border: barBorder,
+                                color: barColor,
+                                fontFamily: 'DM Mono, monospace',
+                                ...(task.note
+                                  ? {
+                                      outline: '2px dashed rgba(255,255,255,0.35)',
+                                      outlineOffset: -2,
+                                    }
+                                  : {}),
+                              }}
+                              title={`${task.label}\n${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}${task.note ? '\n\n📝 ' + task.note : ''}`}
+                            />
+                          )}
+                        </div>
+                      </>
+                    )
+                  })}
+
+                {/* Add task row */}
+                {!isCollapsed && (
+                  <>
+                    <div
+                      className={`${STICKY} flex items-center px-3.5 bg-app-surface border-r border-b border-app-border`}
+                      style={{ height: 36 }}
+                    >
+                      <button
+                        onClick={() => onAddTask(section.id)}
+                        aria-label={`Add task to ${section.label}`}
+                        className="bg-transparent border-none text-gray-300 cursor-pointer text-[13px] flex items-center gap-1 px-1 py-2 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
+                      >
+                        + Add task
+                      </button>
+                    </div>
+                    <div
+                      className="relative overflow-hidden border-b border-app-border"
+                      style={{ height: 36, background: SECTION_BG[section.color] ?? 'transparent' }}
                       aria-hidden="true"
                     >
                       <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
-
-                      {task.type === 'milestone' ? (
-                        <div
-                          className="hover:brightness-125 transition-[filter] duration-150 absolute top-1/2 -translate-y-1/2 rotate-45 rounded-[2px] z-[5]"
-                          style={{
-                            width: 14,
-                            height: 14,
-                            left: `calc(${left}% - 7px)`,
-                            background: diamondBg,
-                            border: diamondBorder,
-                          }}
-                          title={task.label}
-                        />
-                      ) : (
-                        <div
-                          className="hover:brightness-125 transition-[filter] duration-150 absolute top-1/2 -translate-y-1/2 rounded-[4px] flex items-center px-2 text-[10.5px] font-medium whitespace-nowrap overflow-hidden z-[5]"
-                          style={{
-                            height: 20,
-                            left: `${left}%`,
-                            width: `${width}%`,
-                            background: barBg,
-                            border: barBorder,
-                            color: barColor,
-                            fontFamily: 'DM Mono, monospace',
-                            ...(task.note
-                              ? { outline: '2px dashed rgba(255,255,255,0.35)', outlineOffset: -2 }
-                              : {}),
-                          }}
-                          title={`${task.label}\n${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}${task.note ? '\n\n📝 ' + task.note : ''}`}
-                        />
-                      )}
                     </div>
                   </>
-                )
-              })}
-
-              {/* Add task row */}
-              <div
-                className={`${STICKY} flex items-center px-3.5 bg-app-surface border-r border-b border-app-border`}
-                style={{ height: 36 }}
-              >
-                <button
-                  onClick={() => onAddTask(section.id)}
-                  aria-label={`Add task to ${section.label}`}
-                  className="bg-transparent border-none text-gray-300 cursor-pointer text-[13px] flex items-center gap-1 px-1 py-2 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
-                >
-                  + Add task
-                </button>
-              </div>
-              <div
-                className="relative overflow-hidden border-b border-app-border"
-                style={{ height: 36, background: SECTION_BG[section.color] ?? 'transparent' }}
-                aria-hidden="true"
-              >
-                <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
-              </div>
-            </>
-          ))}
+                )}
+              </>
+            )
+          })}
         </div>
       </div>
     </div>
