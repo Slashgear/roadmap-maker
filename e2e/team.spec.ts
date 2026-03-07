@@ -37,8 +37,9 @@ test('delete a roadmap returns to empty state', async ({ authedPage: page }) => 
   await page.getByRole('button', { name: 'Create', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Roadmap To Delete' })).toBeVisible()
 
-  // Delete it
-  await page.getByRole('button', { name: '⚙ Settings' }).click()
+  // Delete it via ··· dropdown
+  await page.getByRole('button', { name: 'More actions' }).click()
+  await page.getByRole('menuitem', { name: 'Settings' }).click()
   page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Delete' }).click()
 
