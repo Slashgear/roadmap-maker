@@ -9,6 +9,7 @@ import SectionModal from './components/SectionModal'
 import RoadmapModal from './components/RoadmapModal'
 import { api } from './api/client'
 import { SSEManager } from './api/sse'
+import ViewRangeControls from './components/ViewRangeControls'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -453,6 +454,12 @@ export default function AppTeam() {
       >
         Skip to chart
       </a>
+      <a
+        href="#view-range-controls"
+        className="absolute left-40 top-4 -translate-y-20 focus:translate-y-0 bg-violet-600 text-white text-sm font-medium px-4 py-2 rounded-lg z-50 transition-transform duration-150 focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        Skip to date range
+      </a>
       <div className="px-3 pt-6 pb-20 min-h-screen sm:px-6 sm:pt-8">
         <main className="max-w-[1200px] mx-auto">
           {/* Top bar */}
@@ -650,36 +657,13 @@ export default function AppTeam() {
 
           {/* View range controls */}
           {roadmap && (
-            <div className="flex items-center gap-2 mb-4 text-xs text-gray-300">
-              <span aria-hidden="true">View</span>
-              <label htmlFor="view-start" className="sr-only">
-                View start date
-              </label>
-              <input
-                id="view-start"
-                type="date"
-                value={viewStart}
-                onChange={(e) => setViewStart(e.currentTarget.value)}
-                style={{ colorScheme: 'dark' }}
-              />
-              <span aria-hidden="true">→</span>
-              <label htmlFor="view-end" className="sr-only">
-                View end date
-              </label>
-              <input
-                id="view-end"
-                type="date"
-                value={viewEnd}
-                onChange={(e) => setViewEnd(e.currentTarget.value)}
-                style={{ colorScheme: 'dark' }}
-              />
-              <button
-                onClick={resetView}
-                className="bg-transparent border border-app-border rounded-md text-gray-500 px-2.5 py-1 text-[11px] cursor-pointer hover:text-app-text transition-colors"
-              >
-                Reset
-              </button>
-            </div>
+            <ViewRangeControls
+              viewStart={viewStart}
+              viewEnd={viewEnd}
+              onStartChange={setViewStart}
+              onEndChange={setViewEnd}
+              onReset={resetView}
+            />
           )}
 
           {/* Team mode indicator */}
