@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
 import { join, resolve } from 'path'
+import type { Sql } from 'postgres'
 
 const ROOT = process.env.PUBLIC_DIR
   ? resolve(process.env.PUBLIC_DIR)
@@ -27,6 +28,8 @@ app.use('*', async (c, next) => {
 })
 
 // API routes — team mode only (dynamic import keeps postgres out of static bundle)
+let sql: Sql | null = null
+
 if (STORAGE_MODE === 'postgres') {
   const authToken = process.env.AUTH_TOKEN ?? ''
   if (!authToken) {
@@ -37,7 +40,7 @@ if (STORAGE_MODE === 'postgres') {
   const { createSql } = await import('./db/init')
   const { createApiRouter } = await import('./api/openapi')
 
-  const sql = await createSql()
+  sql = await createSql()
   const sessions = new Map<string, Date>()
   const apiRouter = createApiRouter(sql, sessions, authToken)
 
@@ -47,10 +50,23 @@ if (STORAGE_MODE === 'postgres') {
   )
 
   process.on('SIGTERM', async () => {
-    await sql.end()
+    await sql!.end()
     process.exit(0)
   })
 }
+
+// Healthcheck — verifies DB connectivity in team mode
+app.get('/health', async (c) => {
+  if (sql) {
+    try {
+      await sql`SELECT 1`
+      return c.json({ status: 'ok', db: 'ok' })
+    } catch {
+      return c.json({ status: 'error', db: 'unreachable' }, 503)
+    }
+  }
+  return c.json({ status: 'ok' })
+})
 
 // Static files with precompressed (br > zstd > gzip) + cache headers
 app.use(
