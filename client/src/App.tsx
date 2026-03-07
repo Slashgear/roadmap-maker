@@ -100,41 +100,94 @@ export default function App() {
   const [viewStart, setViewStart] = useState(() => defaultViewDates().start)
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
-  const [examplesOpen, setExamplesOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [copyDone, setCopyDone] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const examplesRef = useRef<HTMLDivElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
+
+  type HistoryEntry = { roadmaps: Roadmap[]; roadmap: Roadmap | null }
+  const [past, setPast] = useState<HistoryEntry[]>([])
+  const [future, setFuture] = useState<HistoryEntry[]>([])
+  const canUndo = past.length > 0
+  const canRedo = future.length > 0
 
   useEffect(() => {
     if (!moreOpen) return
-    function handler(e: MouseEvent) {
+    function onMouseDown(e: MouseEvent) {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
   }, [moreOpen])
 
-  useEffect(() => {
-    if (!examplesOpen) return
-    function handler(e: MouseEvent) {
-      if (examplesRef.current && !examplesRef.current.contains(e.target as Node)) {
-        setExamplesOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [examplesOpen])
+  const MAX_HISTORY = 50
 
   function updateRoadmaps(updated: Roadmap[], active: Roadmap | null) {
+    setPast((prev) => {
+      const next = [...prev, { roadmaps, roadmap }]
+      return next.length > MAX_HISTORY ? next.slice(-MAX_HISTORY) : next
+    })
+    setFuture([])
     save(updated)
     setRoadmaps(updated)
     setRoadmap(active)
-    if (active) {
-      window.location.hash = '#' + active.slug
-    }
+    if (active) window.location.hash = '#' + active.slug
   }
+
+  function undo() {
+    if (past.length === 0) return
+    const prev = past[past.length - 1]
+    setPast((p) => p.slice(0, -1))
+    setFuture((f) => [{ roadmaps, roadmap }, ...f])
+    save(prev.roadmaps)
+    setRoadmaps(prev.roadmaps)
+    setRoadmap(prev.roadmap)
+    window.location.hash = prev.roadmap ? '#' + prev.roadmap.slug : ''
+  }
+
+  function redo() {
+    if (future.length === 0) return
+    const next = future[0]
+    setFuture((f) => f.slice(1))
+    setPast((p) => [...p, { roadmaps, roadmap }])
+    save(next.roadmaps)
+    setRoadmaps(next.roadmaps)
+    setRoadmap(next.roadmap)
+    window.location.hash = next.roadmap ? '#' + next.roadmap.slug : ''
+  }
+
+  // Keyboard shortcuts for undo/redo — stable handler via refs
+  const undoRef = useRef(undo)
+  const redoRef = useRef(redo)
+  undoRef.current = undo
+  redoRef.current = redo
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+        e.preventDefault()
+        undoRef.current()
+      }
+      if (
+        (e.key === 'y' && (e.ctrlKey || e.metaKey)) ||
+        (e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey)
+      ) {
+        e.preventDefault()
+        redoRef.current()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   function resetView() {
     const { start, end } = defaultViewDates()
@@ -357,7 +410,6 @@ export default function App() {
     const imported = result.data as Roadmap
     const without = roadmaps.filter((r) => r.slug !== imported.slug)
     updateRoadmaps([...without, imported], imported)
-    setExamplesOpen(false)
   }
 
   function handleExport() {
@@ -455,127 +507,105 @@ export default function App() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Undo / Redo */}
+              {roadmap && (
+                <>
+                  <Btn onClick={undo} variant="ghost" disabled={!canUndo} title="Ctrl+Z">
+                    <span aria-hidden="true">↺</span> Undo
+                  </Btn>
+                  <Btn onClick={redo} variant="ghost" disabled={!canRedo} title="Ctrl+Y">
+                    <span aria-hidden="true">↻</span> Redo
+                  </Btn>
+                </>
+              )}
+
+              {/* + Section */}
               {roadmap && (
                 <Btn onClick={() => setModal({ type: 'add-section' })} variant="secondary">
                   + Section
                 </Btn>
               )}
 
-              {/* Secondary actions — desktop */}
-              <div className="hidden sm:flex gap-2">
-                {roadmap && (
-                  <>
-                    <Btn onClick={() => setModal({ type: 'edit-roadmap' })} variant="ghost">
-                      ⚙ Settings
-                    </Btn>
-                    <Btn onClick={() => void handleCopyLink()} variant="ghost">
-                      {copyDone ? 'Copied!' : 'Copy link'}
-                    </Btn>
-                    <Btn onClick={handleExport} variant="ghost">
-                      Export
-                    </Btn>
-                    <Btn onClick={handleExportPng} variant="ghost">
-                      Export PNG
-                    </Btn>
-                  </>
-                )}
-                <Btn onClick={() => fileInputRef.current?.click()} variant="ghost">
-                  Import
-                </Btn>
-                <div ref={examplesRef} className="relative">
-                  <Btn onClick={() => setExamplesOpen((o) => !o)} variant="ghost">
-                    Examples
-                  </Btn>
-                  {examplesOpen && (
-                    <div className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 overflow-hidden min-w-[220px]">
-                      {EXAMPLES.map((ex) => (
-                        <button
-                          key={ex.slug}
-                          onClick={() => void handleLoadExample(ex.slug)}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border last:border-0 cursor-pointer bg-transparent"
-                        >
-                          <div className="font-medium">{ex.title}</div>
-                          {ex.subtitle && (
-                            <div className="text-[11px] text-gray-400 mt-0.5">{ex.subtitle}</div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Secondary actions — mobile dropdown */}
-              <div ref={moreRef} className="relative sm:hidden">
-                <Btn onClick={() => setMoreOpen((o) => !o)} variant="ghost">
+              {/* Unified dropdown */}
+              <div ref={moreRef} className="relative">
+                <button
+                  onClick={() => setMoreOpen((o) => !o)}
+                  aria-expanded={moreOpen}
+                  aria-haspopup="menu"
+                  aria-label="More actions"
+                  className="border border-app-border bg-transparent text-gray-300 rounded-lg px-3.5 py-1.5 text-[13px] font-medium cursor-pointer whitespace-nowrap hover:text-app-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                >
                   ···
-                </Btn>
+                </button>
                 {moreOpen && (
-                  <div className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 overflow-hidden min-w-[180px]">
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-1 bg-app-surface border border-app-border rounded-lg shadow-xl z-50 py-1 min-w-[200px]"
+                  >
                     {roadmap && (
                       <>
-                        <button
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             setModal({ type: 'edit-roadmap' })
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
-                          ⚙ Settings
-                        </button>
-                        <button
+                          Settings
+                        </DropdownItem>
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             void handleCopyLink()
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
                           {copyDone ? 'Copied!' : 'Copy link'}
-                        </button>
-                        <button
+                        </DropdownItem>
+                        <DropdownSeparator />
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             handleExport()
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
                           Export JSON
-                        </button>
-                        <button
+                        </DropdownItem>
+                        <DropdownItem
                           onClick={() => {
                             setMoreOpen(false)
                             void handleExportPng()
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                         >
                           Export PNG
-                        </button>
+                        </DropdownItem>
+                        <DropdownSeparator />
                       </>
                     )}
-                    <button
+                    <DropdownItem
                       onClick={() => {
                         setMoreOpen(false)
                         fileInputRef.current?.click()
                       }}
-                      className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border cursor-pointer bg-transparent"
                     >
                       Import JSON
-                    </button>
+                    </DropdownItem>
+                    <DropdownSeparator />
+                    <div className="px-4 py-1.5 text-[11px] text-gray-500 uppercase tracking-wide font-semibold select-none">
+                      Examples
+                    </div>
                     {EXAMPLES.map((ex) => (
-                      <button
+                      <DropdownItem
                         key={ex.slug}
                         onClick={() => {
                           setMoreOpen(false)
                           void handleLoadExample(ex.slug)
                         }}
-                        className="w-full text-left px-4 py-3 text-[13px] text-app-text hover:bg-white/5 border-b border-app-border last:border-0 cursor-pointer bg-transparent"
                       >
-                        <div className="font-medium">{ex.title}</div>
+                        <span className="font-medium">{ex.title}</span>
                         {ex.subtitle && (
-                          <div className="text-[11px] text-gray-400 mt-0.5">{ex.subtitle}</div>
+                          <span className="text-[11px] text-gray-400 mt-0.5">{ex.subtitle}</span>
                         )}
-                      </button>
+                      </DropdownItem>
                     ))}
                   </div>
                 )}
@@ -753,10 +783,16 @@ function Btn({
   children,
   onClick,
   variant = 'secondary',
+  disabled = false,
+  'aria-label': ariaLabel,
+  title,
 }: {
   children: ComponentChildren
   onClick: () => void
   variant?: 'primary' | 'secondary' | 'ghost'
+  disabled?: boolean
+  'aria-label'?: string
+  title?: string
 }) {
   const variantClass = {
     primary: 'bg-violet-500 border-transparent text-white',
@@ -766,11 +802,30 @@ function Btn({
   return (
     <button
       onClick={onClick}
-      className={`${variantClass[variant]} border rounded-lg px-3.5 py-1.5 text-[13px] font-medium cursor-pointer whitespace-nowrap`}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      title={title}
+      className={`${variantClass[variant]} border rounded-lg px-3.5 py-1.5 text-[13px] font-medium cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500`}
     >
       {children}
     </button>
   )
+}
+
+function DropdownItem({ children, onClick }: { children: ComponentChildren; onClick: () => void }) {
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      className="w-full text-left px-4 py-2.5 text-[13px] text-app-text hover:bg-white/5 cursor-pointer bg-transparent flex flex-col focus-visible:outline-none focus-visible:bg-white/5"
+    >
+      {children}
+    </button>
+  )
+}
+
+function DropdownSeparator() {
+  return <div role="separator" className="h-px bg-app-border my-1 mx-2" />
 }
 
 function EmptyState({
