@@ -1,5 +1,16 @@
 # @slashgear/roadmap-maker
 
+## 1.8.0
+
+### Minor Changes
+
+- 4531ffe: feat: add JSON import in team mode
+
+### Patch Changes
+
+- a511c44: feat: add /health route with DB connectivity check in team mode
+- 87d95e2: chore: remove unused temporal-polyfill dependency
+
 ## 1.7.0
 
 ### Minor Changes
