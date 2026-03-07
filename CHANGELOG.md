@@ -1,5 +1,19 @@
 # @slashgear/roadmap-maker
 
+## 1.9.0
+
+### Minor Changes
+
+- 573cbaa: feat: improve mobile responsiveness
+
+  - Reduce Gantt label column from 240px to 140px on screens < 640px
+  - Reduce container padding on mobile (px-3 pt-6 vs px-6 pt-8)
+  - Secondary actions (Settings, Export, Import, Examples) moved to a ··· dropdown on mobile
+
+### Patch Changes
+
+- 6738620: feat: add HTTP request logger to server via hono/logger
+
 ## 1.8.0
 
 ### Minor Changes
