@@ -1,18 +1,19 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Hono } from 'hono'
-import { Database } from 'bun:sqlite'
-import { initDb } from '../db/init'
+import { createTestSql } from '../__mocks__/pg-setup'
+import { applySchema } from '../db/init'
 import { createApiRouter } from './openapi'
 
 const AUTH_TOKEN = 'test-token'
 
-function createTestApp() {
-  const db = initDb(':memory:')
+async function createTestApp() {
+  const sql = await createTestSql()
+  await applySchema(sql)
   const sessions = new Map<string, Date>()
-  const router = createApiRouter(db, sessions, AUTH_TOKEN)
+  const router = createApiRouter(sql, sessions, AUTH_TOKEN)
   const app = new Hono()
   app.route('/api', router)
-  return { app, db, sessions }
+  return { app, sql, sessions }
 }
 
 async function authenticate(app: Hono): Promise<string> {
@@ -30,7 +31,7 @@ async function authenticate(app: Hono): Promise<string> {
 
 describe('POST /api/auth', () => {
   it('returns 401 with wrong token', async () => {
-    const { app } = createTestApp()
+    const { app } = await createTestApp()
     const res = await app.request('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -40,7 +41,7 @@ describe('POST /api/auth', () => {
   })
 
   it('returns 200 and sets session cookie with correct token', async () => {
-    const { app } = createTestApp()
+    const { app } = await createTestApp()
     const res = await app.request('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,13 +55,13 @@ describe('POST /api/auth', () => {
 
 describe('GET /api/me', () => {
   it('returns 401 without session', async () => {
-    const { app } = createTestApp()
+    const { app } = await createTestApp()
     const res = await app.request('/api/me')
     expect(res.status).toBe(401)
   })
 
   it('returns 200 with valid session', async () => {
-    const { app } = createTestApp()
+    const { app } = await createTestApp()
     const cookie = await authenticate(app)
     const res = await app.request('/api/me', { headers: { Cookie: cookie } })
     expect(res.status).toBe(200)
@@ -76,7 +77,7 @@ describe('Roadmaps', () => {
   let cookie: string
 
   beforeEach(async () => {
-    ;({ app } = createTestApp())
+    ;({ app } = await createTestApp())
     cookie = await authenticate(app)
   })
 
@@ -191,7 +192,7 @@ describe('Sections', () => {
   let roadmapSlug: string
 
   beforeEach(async () => {
-    ;({ app } = createTestApp())
+    ;({ app } = await createTestApp())
     cookie = await authenticate(app)
     const res = await app.request('/api/roadmaps', {
       method: 'POST',
@@ -280,7 +281,7 @@ describe('Tasks', () => {
   let sectionId: string
 
   beforeEach(async () => {
-    ;({ app } = createTestApp())
+    ;({ app } = await createTestApp())
     cookie = await authenticate(app)
     const rm = await app.request('/api/roadmaps', {
       method: 'POST',
@@ -399,7 +400,7 @@ describe('Tasks', () => {
 
 describe('OpenAPI', () => {
   it('GET /api/openapi.json returns a valid spec', async () => {
-    const { app } = createTestApp()
+    const { app } = await createTestApp()
     const res = await app.request('/api/openapi.json')
     expect(res.status).toBe(200)
     const spec = await res.json()
@@ -409,7 +410,7 @@ describe('OpenAPI', () => {
   })
 
   it('GET /api/docs returns Swagger UI HTML', async () => {
-    const { app } = createTestApp()
+    const { app } = await createTestApp()
     const res = await app.request('/api/docs')
     expect(res.status).toBe(200)
     const html = await res.text()

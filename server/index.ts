@@ -26,23 +26,30 @@ app.use('*', async (c, next) => {
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) c.res.headers.set(k, v)
 })
 
-// API routes — team mode only (dynamic import keeps SQLite out of static bundle)
-if (STORAGE_MODE === 'sqlite') {
+// API routes — team mode only (dynamic import keeps postgres out of static bundle)
+if (STORAGE_MODE === 'postgres') {
   const authToken = process.env.AUTH_TOKEN ?? ''
   if (!authToken) {
-    console.error('[server] AUTH_TOKEN env var is required in sqlite mode')
+    console.error('[server] AUTH_TOKEN env var is required in postgres mode')
     process.exit(1)
   }
 
-  const { initDb } = await import('./db/init')
+  const { createSql } = await import('./db/init')
   const { createApiRouter } = await import('./api/openapi')
 
-  const db = initDb()
+  const sql = await createSql()
   const sessions = new Map<string, Date>()
-  const apiRouter = createApiRouter(db, sessions, authToken)
+  const apiRouter = createApiRouter(sql, sessions, authToken)
 
   app.route('/api', apiRouter)
-  console.log(`[server] Team mode — SQLite at ${process.env.DB_PATH ?? '/data/roadmaps.db'}`)
+  console.log(
+    `[server] Team mode — PostgreSQL at ${process.env.DATABASE_URL ?? 'postgres://localhost/roadmaps'}`,
+  )
+
+  process.on('SIGTERM', async () => {
+    await sql.end()
+    process.exit(0)
+  })
 }
 
 // Static files with precompressed (br > zstd > gzip) + cache headers

@@ -1,4 +1,4 @@
-import type { Database } from 'bun:sqlite'
+import type { Sql } from 'postgres'
 import type { Roadmap } from '../../client/src/types'
 import { getSectionsByRoadmapId } from './sections'
 import type { DbResult } from './tasks'
@@ -13,7 +13,7 @@ type RoadmapRow = {
   version: number
 }
 
-function rowToRoadmap(row: RoadmapRow, db: Database, withSections = true): Roadmap {
+async function rowToRoadmap(row: RoadmapRow, sql: Sql, withSections = true): Promise<Roadmap> {
   return {
     id: row.id,
     slug: row.slug,
@@ -22,23 +22,23 @@ function rowToRoadmap(row: RoadmapRow, db: Database, withSections = true): Roadm
     startDate: row.start_date,
     endDate: row.end_date,
     version: row.version,
-    sections: withSections ? getSectionsByRoadmapId(db, row.id) : [],
+    sections: withSections ? await getSectionsByRoadmapId(sql, row.id) : [],
   }
 }
 
-export function getRoadmapList(db: Database): Omit<Roadmap, 'sections'>[] {
-  const rows = db.query<RoadmapRow, []>('SELECT * FROM roadmaps ORDER BY created_at').all()
-  return rows.map((r) => rowToRoadmap(r, db, false))
+export async function getRoadmapList(sql: Sql): Promise<Omit<Roadmap, 'sections'>[]> {
+  const rows = await sql<RoadmapRow[]>`SELECT * FROM roadmaps ORDER BY created_at`
+  return Promise.all(rows.map((r) => rowToRoadmap(r, sql, false)))
 }
 
-export function getRoadmapBySlug(db: Database, slug: string): Roadmap | null {
-  const row = db.query<RoadmapRow, [string]>('SELECT * FROM roadmaps WHERE slug = ?').get(slug)
+export async function getRoadmapBySlug(sql: Sql, slug: string): Promise<Roadmap | null> {
+  const [row] = await sql<RoadmapRow[]>`SELECT * FROM roadmaps WHERE slug = ${slug}`
   if (!row) return null
-  return rowToRoadmap(row, db)
+  return rowToRoadmap(row, sql)
 }
 
-export function createRoadmap(
-  db: Database,
+export async function createRoadmap(
+  sql: Sql,
   data: {
     id: string
     slug: string
@@ -47,16 +47,16 @@ export function createRoadmap(
     startDate: string
     endDate: string
   },
-): Roadmap {
-  db.run(
-    'INSERT INTO roadmaps (id, slug, title, subtitle, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)',
-    [data.id, data.slug, data.title, data.subtitle ?? null, data.startDate, data.endDate],
-  )
-  return getRoadmapBySlug(db, data.slug)!
+): Promise<Roadmap> {
+  await sql`
+    INSERT INTO roadmaps (id, slug, title, subtitle, start_date, end_date)
+    VALUES (${data.id}, ${data.slug}, ${data.title}, ${data.subtitle ?? null}, ${data.startDate}, ${data.endDate})
+  `
+  return (await getRoadmapBySlug(sql, data.slug))!
 }
 
-export function updateRoadmap(
-  db: Database,
+export async function updateRoadmap(
+  sql: Sql,
   slug: string,
   data: {
     title?: string
@@ -66,37 +66,31 @@ export function updateRoadmap(
     newSlug?: string
     version: number
   },
-): DbResult<Roadmap> {
-  const current = db.query<RoadmapRow, [string]>('SELECT * FROM roadmaps WHERE slug = ?').get(slug)
+): Promise<DbResult<Roadmap>> {
+  const [current] = await sql<RoadmapRow[]>`SELECT * FROM roadmaps WHERE slug = ${slug}`
   if (!current) return { status: 'not_found' }
   if (current.version !== data.version) {
-    return { status: 'conflict', current: rowToRoadmap(current, db) }
+    return { status: 'conflict', current: await rowToRoadmap(current, sql) }
   }
 
-  db.run(
-    `UPDATE roadmaps SET
-      title = ?, subtitle = ?, start_date = ?, end_date = ?, slug = ?,
-      version = version + 1, updated_at = datetime('now')
-     WHERE slug = ? AND version = ?`,
-    [
-      data.title ?? current.title,
-      data.subtitle !== undefined ? (data.subtitle ?? null) : current.subtitle,
-      data.startDate ?? current.start_date,
-      data.endDate ?? current.end_date,
-      data.newSlug ?? current.slug,
-      slug,
-      data.version,
-    ],
-  )
+  await sql`
+    UPDATE roadmaps SET
+      title      = ${data.title ?? current.title},
+      subtitle   = ${data.subtitle !== undefined ? (data.subtitle ?? null) : current.subtitle},
+      start_date = ${data.startDate ?? current.start_date},
+      end_date   = ${data.endDate ?? current.end_date},
+      slug       = ${data.newSlug ?? current.slug},
+      version    = version + 1,
+      updated_at = NOW()
+    WHERE slug = ${slug} AND version = ${data.version}
+  `
 
   const updatedSlug = data.newSlug ?? slug
-  const updated = db
-    .query<RoadmapRow, [string]>('SELECT * FROM roadmaps WHERE slug = ?')
-    .get(updatedSlug)!
-  return { status: 'ok', data: rowToRoadmap(updated, db) }
+  const [updated] = await sql<RoadmapRow[]>`SELECT * FROM roadmaps WHERE slug = ${updatedSlug}`
+  return { status: 'ok', data: await rowToRoadmap(updated, sql) }
 }
 
-export function deleteRoadmap(db: Database, slug: string): boolean {
-  db.run('DELETE FROM roadmaps WHERE slug = ?', [slug])
+export async function deleteRoadmap(sql: Sql, slug: string): Promise<boolean> {
+  await sql`DELETE FROM roadmaps WHERE slug = ${slug}`
   return true
 }

@@ -10,7 +10,7 @@ export default defineConfig({
   use: { baseURL: `http://localhost:${E2E_PORT}` },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: `PUBLIC_DIR=./public-team AUTH_TOKEN=${AUTH_TOKEN} DB_PATH=/tmp/roadmap-e2e.db STORAGE=sqlite PORT=${E2E_PORT} bun run server/index.ts`,
+    command: `PUBLIC_DIR=./public-team AUTH_TOKEN=${AUTH_TOKEN} STORAGE=postgres DATABASE_URL=${process.env.DATABASE_URL ?? 'postgres://roadmaps:roadmaps@localhost:5432/roadmaps'} PORT=${E2E_PORT} bun run server/index.ts`,
     url: `http://localhost:${E2E_PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 15_000,

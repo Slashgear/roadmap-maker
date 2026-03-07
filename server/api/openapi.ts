@@ -3,7 +3,7 @@ import { getCookie, setCookie } from 'hono/cookie'
 import { streamSSE } from 'hono/streaming'
 import { swaggerUI } from '@hono/swagger-ui'
 import { nanoid } from 'nanoid'
-import type { Database } from 'bun:sqlite'
+import type { Sql } from 'postgres'
 import type { Roadmap, Section, Task } from '../../client/src/types'
 import { authMiddleware } from '../middleware/auth'
 import {
@@ -40,11 +40,7 @@ function slugify(title: string): string {
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-export function createApiRouter(
-  db: Database,
-  sessions: Map<string, Date>,
-  authToken: string,
-): Hono {
+export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken: string): Hono {
   const app = new Hono()
   const sseClients = new Map<string, Set<(data: string) => void>>()
 
@@ -82,8 +78,8 @@ export function createApiRouter(
 
   // ── Roadmaps ────────────────────────────────────────────────────────────────
 
-  app.get('/roadmaps', auth, (c) => {
-    return c.json(getRoadmapList(db))
+  app.get('/roadmaps', auth, async (c) => {
+    return c.json(await getRoadmapList(sql))
   })
 
   app.post('/roadmaps', auth, async (c) => {
@@ -96,7 +92,7 @@ export function createApiRouter(
     }>()
     const id = nanoid()
     const slug = body.slug || slugify(body.title) || id
-    const roadmap = createRoadmap(db, {
+    const roadmap = await createRoadmap(sql, {
       id,
       slug,
       title: body.title,
@@ -107,9 +103,9 @@ export function createApiRouter(
     return c.json(roadmap, 201)
   })
 
-  app.get('/roadmaps/:slug', auth, (c) => {
+  app.get('/roadmaps/:slug', auth, async (c) => {
     const slug = c.req.param('slug')
-    const roadmap = getRoadmapBySlug(db, slug)
+    const roadmap = await getRoadmapBySlug(sql, slug)
     if (!roadmap) return c.json({ error: 'Not found' }, 404)
     return c.json(roadmap)
   })
@@ -124,7 +120,7 @@ export function createApiRouter(
       slug?: string
       version: number
     }>()
-    const result = updateRoadmap(db, slug, {
+    const result = await updateRoadmap(sql, slug, {
       title: body.title,
       subtitle: body.subtitle,
       startDate: body.startDate,
@@ -142,12 +138,12 @@ export function createApiRouter(
     return c.json(result.data)
   })
 
-  app.delete('/roadmaps/:slug', auth, (c) => {
+  app.delete('/roadmaps/:slug', auth, async (c) => {
     const slug = c.req.param('slug')
-    const exists = getRoadmapBySlug(db, slug)
+    const exists = await getRoadmapBySlug(sql, slug)
     if (!exists) return c.json({ error: 'Not found' }, 404)
     broadcast(slug, { type: 'roadmap_deleted' })
-    deleteRoadmap(db, slug)
+    await deleteRoadmap(sql, slug)
     return new Response(null, { status: 204 })
   })
 
@@ -155,10 +151,10 @@ export function createApiRouter(
 
   app.post('/roadmaps/:slug/sections', auth, async (c) => {
     const slug = c.req.param('slug')
-    const roadmap = getRoadmapBySlug(db, slug)
+    const roadmap = await getRoadmapBySlug(sql, slug)
     if (!roadmap) return c.json({ error: 'Not found' }, 404)
     const body = await c.req.json<{ label: string; color: string }>()
-    const section = createSection(db, roadmap.id, {
+    const section = await createSection(sql, roadmap.id, {
       id: nanoid(),
       label: body.label,
       color: body.color,
@@ -171,7 +167,7 @@ export function createApiRouter(
     const slug = c.req.param('slug')
     const sectionId = c.req.param('id')
     const body = await c.req.json<{ label?: string; color?: string; version: number }>()
-    const result = updateSection(db, sectionId, body)
+    const result = await updateSection(sql, sectionId, body)
     if (result.status === 'not_found') return c.json({ error: 'Not found' }, 404)
     if (result.status === 'conflict')
       return c.json({ conflict: true, current: result.current }, 409)
@@ -179,10 +175,10 @@ export function createApiRouter(
     return c.json(result.data)
   })
 
-  app.delete('/roadmaps/:slug/sections/:id', auth, (c) => {
+  app.delete('/roadmaps/:slug/sections/:id', auth, async (c) => {
     const slug = c.req.param('slug')
     const sectionId = c.req.param('id')
-    deleteSection(db, sectionId)
+    await deleteSection(sql, sectionId)
     broadcast(slug, { type: 'section_deleted', payload: { id: sectionId } })
     return new Response(null, { status: 204 })
   })
@@ -201,7 +197,7 @@ export function createApiRouter(
       note?: string
       externalLink?: string
     }>()
-    const task = createTask(db, sectionId, { id: nanoid(), ...body })
+    const task = await createTask(sql, sectionId, { id: nanoid(), ...body })
     broadcast(slug, { type: 'task_added', payload: task })
     return c.json(task, 201)
   })
@@ -211,7 +207,7 @@ export function createApiRouter(
     const sectionId = c.req.param('sectionId')
     const taskId = c.req.param('id')
     const body = await c.req.json<Partial<Task> & { version: number }>()
-    const result = updateTask(db, taskId, body)
+    const result = await updateTask(sql, taskId, body)
     if (result.status === 'not_found') return c.json({ error: 'Not found' }, 404)
     if (result.status === 'conflict')
       return c.json({ conflict: true, current: result.current }, 409)
@@ -219,11 +215,11 @@ export function createApiRouter(
     return c.json(result.data)
   })
 
-  app.delete('/roadmaps/:slug/sections/:sectionId/tasks/:id', auth, (c) => {
+  app.delete('/roadmaps/:slug/sections/:sectionId/tasks/:id', auth, async (c) => {
     const slug = c.req.param('slug')
     const sectionId = c.req.param('sectionId')
     const taskId = c.req.param('id')
-    deleteTask(db, taskId)
+    await deleteTask(sql, taskId)
     broadcast(slug, { type: 'task_deleted', payload: { id: taskId, sectionId } })
     return new Response(null, { status: 204 })
   })
@@ -232,7 +228,7 @@ export function createApiRouter(
 
   app.get('/roadmaps/:slug/events', auth, async (c) => {
     const slug = c.req.param('slug')
-    const roadmap = getRoadmapBySlug(db, slug)
+    const roadmap = await getRoadmapBySlug(sql, slug)
     if (!roadmap) return c.json({ error: 'Not found' }, 404)
 
     return streamSSE(c, async (stream) => {
@@ -246,7 +242,7 @@ export function createApiRouter(
       // Send retry interval + initial state
       await stream.writeSSE({ data: '', retry: 3000 })
       await stream.writeSSE({
-        data: JSON.stringify({ type: 'init', payload: getRoadmapBySlug(db, slug) }),
+        data: JSON.stringify({ type: 'init', payload: await getRoadmapBySlug(sql, slug) }),
         event: 'message',
       })
 

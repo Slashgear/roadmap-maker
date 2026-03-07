@@ -30,18 +30,13 @@ COPY --from=builder --chown=bun:bun /app/server ./server
 COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=builder --chown=bun:bun /app/package.json ./
 
-# Create the data directory and give ownership to the bun user before declaring the volume
-# (VOLUME would freeze permissions if chown came after)
-RUN mkdir -p /data && chown bun:bun /data
-VOLUME /data
-
 USER bun
 
 EXPOSE 8080
 
-ENV STORAGE=sqlite
-ENV DB_PATH=/data/roadmaps.db
-# AUTH_TOKEN must be provided at runtime: docker run -e AUTH_TOKEN=... roadmap-maker-team
+ENV STORAGE=postgres
+# DATABASE_URL and AUTH_TOKEN must be provided at runtime:
+# docker run -e AUTH_TOKEN=... -e DATABASE_URL=postgres://... roadmap-maker-team
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD bun -e "fetch('http://localhost:' + (process.env.PORT||8080) + '/api/me').then(r=>process.exit(r.status===401||r.ok?0:1)).catch(()=>process.exit(1))"

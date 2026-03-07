@@ -1,19 +1,30 @@
 # roadmap-maker
 
-**Gantt roadmap builder** — static (localStorage) or team (SQLite + real-time SSE)
+**Gantt roadmap builder** — static (localStorage) or team (PostgreSQL + real-time SSE)
 
+[![CI](https://github.com/Slashgear/roadmap-maker/actions/workflows/ci.yml/badge.svg)](https://github.com/Slashgear/roadmap-maker/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/package-json/v/Slashgear/roadmap-maker)](./package.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](./LICENSE)
-[![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646cff)](https://vitejs.dev)
-[![Preact](https://img.shields.io/badge/Preact-10-673ab8)](https://preactjs.com)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![GitHub stars](https://img.shields.io/github/stars/Slashgear/roadmap-maker?style=social)](https://github.com/Slashgear/roadmap-maker/stargazers)
+
+[![Bun](https://img.shields.io/badge/Bun-1%2B-black?logo=bun&logoColor=white)](https://bun.sh)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![Built with Vite](https://img.shields.io/badge/Vite-6-646cff?logo=vite&logoColor=white)](https://vitejs.dev)
+[![Preact](https://img.shields.io/badge/Preact-10-673ab8?logo=preact&logoColor=white)](https://preactjs.com)
+[![Hono](https://img.shields.io/badge/Hono-4-e36002?logo=hono&logoColor=white)](https://hono.dev)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169e1?logo=postgresql&logoColor=white)](https://postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ed?logo=docker&logoColor=white)](./Dockerfile)
+[![OpenAPI 3.0](https://img.shields.io/badge/OpenAPI-3.0-6ba539?logo=openapiinitiative&logoColor=white)](./server/api/openapi.ts)
 
 ![](./client/public/og-image.png)
 
 Two build modes:
 
-| Mode                 | Storage                       | Use case                            |
-| -------------------- | ----------------------------- | ----------------------------------- |
-| **Static** (default) | `localStorage` in the browser | Personal use, no server needed      |
-| **Team**             | SQLite on the server + SSE    | Team use, changes sync in real-time |
+| Mode                 | Storage                        | Use case                            |
+| -------------------- | ------------------------------ | ----------------------------------- |
+| **Static** (default) | `localStorage` in the browser  | Personal use, no server needed      |
+| **Team**             | PostgreSQL on the server + SSE | Team use, changes sync in real-time |
 
 ---
 
@@ -53,7 +64,33 @@ bun run build   # outputs static files to ./public
 bun run preview # preview locally
 ```
 
-### Docker
+### Docker Compose
+
+The easiest way to run the app locally. Three services are defined — only `postgres` starts by default; the app services use [profiles](https://docs.docker.com/compose/profiles/) so you opt in explicitly.
+
+**Postgres only** (for development / unit tests):
+
+```bash
+docker compose up -d
+```
+
+**Static app** — personal use, no auth, data in the browser:
+
+```bash
+docker compose --profile static up
+# → http://localhost:8080
+```
+
+**Team app** — collaborative mode with PostgreSQL:
+
+```bash
+AUTH_TOKEN=my-secret docker compose --profile team up
+# → http://localhost:8080 — sign in with "my-secret"
+```
+
+`AUTH_TOKEN` is required — the compose file will refuse to start without it.
+
+### Docker (manual)
 
 ```bash
 docker build -t roadmap-maker .
@@ -237,40 +274,46 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
 
 ## Stack
 
-|                  | Technology                                                                |
-| ---------------- | ------------------------------------------------------------------------- |
-| Frontend         | [Preact](https://preactjs.com) + [TypeScript](https://typescriptlang.org) |
-| Bundler          | [Vite](https://vitejs.dev)                                                |
-| Styles           | [Tailwind CSS](https://tailwindcss.com)                                   |
-| Validation       | [Zod](https://zod.dev)                                                    |
-| Runtime / build  | [Bun](https://bun.sh)                                                     |
-| Server           | [Hono](https://hono.dev) (static serving + team API)                      |
-| DB (team mode)   | SQLite via `bun:sqlite` (WAL, FK, optimistic locking)                     |
-| Real-time (team) | Server-Sent Events (SSE)                                                  |
-| Tests            | [Vitest](https://vitest.dev)                                              |
+|                  | Technology                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Frontend         | [Preact](https://preactjs.com) + [TypeScript](https://typescriptlang.org)                                        |
+| Bundler          | [Vite](https://vitejs.dev)                                                                                       |
+| Styles           | [Tailwind CSS](https://tailwindcss.com)                                                                          |
+| Validation       | [Zod](https://zod.dev)                                                                                           |
+| Runtime / build  | [Bun](https://bun.sh)                                                                                            |
+| Server           | [Hono](https://hono.dev) (static serving + team API)                                                             |
+| DB (team mode)   | [PostgreSQL](https://postgresql.org) via [`postgres`](https://github.com/porsager/postgres) (optimistic locking) |
+| Real-time (team) | Server-Sent Events (SSE)                                                                                         |
+| Tests            | [Vitest](https://vitest.dev) + real PostgreSQL (Docker)                                                          |
 
 ---
 
 ## Team mode
 
-The team build adds a REST API backed by SQLite and a real-time SSE stream. Multiple users can edit the same roadmap simultaneously — changes propagate to all connected clients within ~50 ms.
+The team build adds a REST API backed by PostgreSQL and a real-time SSE stream. Multiple users can edit the same roadmap simultaneously — changes propagate to all connected clients within ~50 ms.
 
 ### How it works
 
 - **Auth**: shared `AUTH_TOKEN` env var → session cookie (HttpOnly, 24h TTL)
-- **Persistence**: SQLite with WAL mode and foreign key cascades
+- **Persistence**: PostgreSQL with foreign key cascades and optimistic locking
 - **Optimistic locking**: every entity has a `version` integer; PUT requests must include the current version. A mismatch returns `409 Conflict` with the server's current state.
 - **Real-time**: `GET /api/roadmaps/:slug/events` is an SSE stream. Every mutation broadcasts a typed event (`task_added`, `section_updated`…) to all connected clients.
 - **API docs**: Swagger UI at `/api/docs` (OpenAPI 3.0 spec at `/api/openapi.json`)
 
-### Build & run
+### Build & run locally
 
 ```bash
-# 1. Build the team frontend
+# 1. Start a local PostgreSQL instance
+docker compose up -d
+
+# 2. Build the team frontend
 bun run build:team          # outputs to ./public-team
 
-# 2. Start the server with SQLite mode
-AUTH_TOKEN=my-secret STORAGE=sqlite bun run server:team
+# 3. Start the server
+DATABASE_URL=postgres://roadmaps:roadmaps@localhost:5432/roadmaps \
+  AUTH_TOKEN=my-secret \
+  STORAGE=postgres \
+  bun run server/index.ts
 # → http://localhost:8080 — enter token "my-secret" to sign in
 ```
 
@@ -280,17 +323,31 @@ AUTH_TOKEN=my-secret STORAGE=sqlite bun run server:team
 docker build -f Dockerfile.team -t roadmap-maker-team .
 docker run -p 8080:8080 \
   -e AUTH_TOKEN=my-secret \
-  -v roadmap-data:/data \
+  -e DATABASE_URL=postgres://user:pass@your-db-host:5432/roadmaps \
   roadmap-maker-team
 ```
 
-The SQLite database is persisted in the `/data` volume (`/data/roadmaps.db`).
+No volume needed — the database lives in PostgreSQL.
 
 ---
 
 ## Deployment
 
-### Docker — static mode (default)
+### Any static host — static mode (Netlify / Vercel / Cloudflare Pages)
+
+```bash
+bun run build   # outputs static files to ./public
+```
+
+Upload `./public` to your host. Framework settings (if needed):
+
+| Setting                    | Value                       |
+| -------------------------- | --------------------------- |
+| Build command              | `bun run build`             |
+| Output / publish directory | `public`                    |
+| Node version               | any (Bun handles the build) |
+
+### Docker — static mode
 
 ```bash
 docker build -t roadmap-maker .
@@ -301,31 +358,85 @@ docker run -p 8080:8080 roadmap-maker
 
 ```bash
 docker build -f Dockerfile.team -t roadmap-maker-team .
-docker run -p 8080:8080 -e AUTH_TOKEN=secret -v data:/data roadmap-maker-team
+docker run -p 8080:8080 \
+  -e AUTH_TOKEN=secret \
+  -e DATABASE_URL=postgres://user:pass@your-db-host:5432/roadmaps \
+  roadmap-maker-team
 ```
 
-### Fly.io (static mode)
+---
+
+### Scaleway — static mode (Serverless Container)
+
+The static build is a single Docker image with no external dependencies — ideal for a Scaleway Serverless Container.
 
 ```bash
-# Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
-fly auth login
-fly launch   # detects the Dockerfile, prompts for app name & region
-fly deploy   # build & push image, then open https://<app-name>.fly.dev
+# 1. Build & push to Scaleway Container Registry
+docker build -t rg.fr-par.scw.cloud/<namespace>/roadmap-maker:latest .
+docker push rg.fr-par.scw.cloud/<namespace>/roadmap-maker:latest
 ```
 
-### Any static host (Netlify / Vercel / Cloudflare Pages)
+Then in the [Scaleway console](https://console.scaleway.com/containers/namespaces):
+
+1. Create a **Container namespace** in your region
+2. Create a new **Serverless Container** pointing to your image
+3. Set port `8080`, min scale `0` (scales to zero when idle)
+4. Deploy — your app is live at the provided URL
+
+No environment variables required. Data lives in the user's browser (`localStorage`).
+
+---
+
+### Scaleway — team mode (Serverless Container + Serverless SQL)
+
+Both the container and the database scale to zero — you pay only for actual usage. No infrastructure to manage, no persistent volumes.
+
+```
+Browser → Serverless Container (Hono) → Serverless SQL Database (PostgreSQL)
+```
+
+#### Step 1 — Create a Serverless SQL Database
+
+In the [Scaleway console](https://console.scaleway.com/serverless-db/instances):
+
+1. Create a **Serverless SQL Database** (PostgreSQL 16, region `fr-par`)
+2. Create a user with read/write permissions on the `roadmaps` database
+3. Copy the connection string — it looks like:
+   ```
+   postgres://roadmaps:<password>@<id>.pg.serverless.fr-par.scw.cloud:5432/roadmaps?sslmode=require
+   ```
+
+The database scales to zero automatically when idle — no running costs between uses.
+
+#### Step 2 — Build & push the team image
 
 ```bash
-bun run build   # outputs static files to ./public
+# Authenticate with Scaleway Container Registry
+docker login rg.fr-par.scw.cloud -u nologin -p <SCW_SECRET_KEY>
+
+# Build the team image
+docker build -f Dockerfile.team \
+  -t rg.fr-par.scw.cloud/<namespace>/roadmap-maker-team:latest .
+
+docker push rg.fr-par.scw.cloud/<namespace>/roadmap-maker-team:latest
 ```
 
-Then upload `./public` to your host of choice. Framework settings (if needed):
+#### Step 3 — Deploy the container
 
-| Setting                    | Value                       |
-| -------------------------- | --------------------------- |
-| Build command              | `bun run build`             |
-| Output / publish directory | `public`                    |
-| Node version               | any (Bun handles the build) |
+In the [Scaleway console](https://console.scaleway.com/containers/namespaces):
+
+1. Create a new **Serverless Container** using the team image
+2. Set port `8080`
+3. Add the environment variables below (mark secrets as confidential):
+   - `STORAGE` = `postgres`
+   - `DATABASE_URL` = `postgres://roadmaps:<pass>@<id>.pg.serverless.fr-par.scw.cloud:5432/roadmaps?sslmode=require`
+   - `AUTH_TOKEN` = a strong random secret (e.g. `openssl rand -hex 32`)
+4. Set **min scale to `1`** if you need persistent SSE connections (scale-to-zero closes open streams)
+5. Deploy
+
+Your team app will be available at the provided `*.containers.fnc.fr-par.scw.cloud` URL.
+
+> **Note on cold starts**: with min scale `0`, the first request after an idle period will wake both the container and the Serverless SQL Database. Expect a cold start of a few seconds. Set min scale to `1` on the container for instant response (the database wakes independently on first query).
 
 ---
 

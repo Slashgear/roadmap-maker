@@ -1,4 +1,4 @@
-import type { Database } from 'bun:sqlite'
+import type { Sql } from 'postgres'
 import type { Section, SectionColor } from '../../client/src/types'
 import { getTasksBySectionId } from './tasks'
 import type { DbResult } from './tasks'
@@ -12,7 +12,7 @@ type SectionRow = {
   version: number
 }
 
-function rowToSection(row: SectionRow, db: Database): Section {
+async function rowToSection(row: SectionRow, sql: Sql): Promise<Section> {
   return {
     id: row.id,
     roadmapId: row.roadmap_id,
@@ -20,65 +20,55 @@ function rowToSection(row: SectionRow, db: Database): Section {
     color: row.color as SectionColor,
     position: row.position,
     version: row.version,
-    tasks: getTasksBySectionId(db, row.id),
+    tasks: await getTasksBySectionId(sql, row.id),
   }
 }
 
-export function getSectionsByRoadmapId(db: Database, roadmapId: string): Section[] {
-  const rows = db
-    .query<SectionRow, [string]>('SELECT * FROM sections WHERE roadmap_id = ? ORDER BY position')
-    .all(roadmapId)
-  return rows.map((r) => rowToSection(r, db))
+export async function getSectionsByRoadmapId(sql: Sql, roadmapId: string): Promise<Section[]> {
+  const rows = await sql<
+    SectionRow[]
+  >`SELECT * FROM sections WHERE roadmap_id = ${roadmapId} ORDER BY position`
+  return Promise.all(rows.map((r) => rowToSection(r, sql)))
 }
 
-export function createSection(
-  db: Database,
+export async function createSection(
+  sql: Sql,
   roadmapId: string,
   data: { id: string; label: string; color: string },
-): Section {
-  const position =
-    db
-      .query<{ count: number }, [string]>(
-        'SELECT COUNT(*) as count FROM sections WHERE roadmap_id = ?',
-      )
-      .get(roadmapId)?.count ?? 0
-  db.run('INSERT INTO sections (id, roadmap_id, label, color, position) VALUES (?, ?, ?, ?, ?)', [
-    data.id,
-    roadmapId,
-    data.label,
-    data.color,
-    position,
-  ])
-  return rowToSection(
-    db.query<SectionRow, [string]>('SELECT * FROM sections WHERE id = ?').get(data.id)!,
-    db,
-  )
+): Promise<Section> {
+  const [{ count }] = await sql<[{ count: number }]>`
+    SELECT COUNT(*)::int AS count FROM sections WHERE roadmap_id = ${roadmapId}
+  `
+  const position = count
+  await sql`
+    INSERT INTO sections (id, roadmap_id, label, color, position)
+    VALUES (${data.id}, ${roadmapId}, ${data.label}, ${data.color}, ${position})
+  `
+  const [row] = await sql<SectionRow[]>`SELECT * FROM sections WHERE id = ${data.id}`
+  return rowToSection(row, sql)
 }
 
-export function updateSection(
-  db: Database,
+export async function updateSection(
+  sql: Sql,
   sectionId: string,
   data: { label?: string; color?: string; version: number },
-): DbResult<Section> {
-  const current = db
-    .query<SectionRow, [string]>('SELECT * FROM sections WHERE id = ?')
-    .get(sectionId)
+): Promise<DbResult<Section>> {
+  const [current] = await sql<SectionRow[]>`SELECT * FROM sections WHERE id = ${sectionId}`
   if (!current) return { status: 'not_found' }
   if (current.version !== data.version)
-    return { status: 'conflict', current: rowToSection(current, db) }
+    return { status: 'conflict', current: await rowToSection(current, sql) }
 
-  db.run(
-    'UPDATE sections SET label = ?, color = ?, version = version + 1 WHERE id = ? AND version = ?',
-    [data.label ?? current.label, data.color ?? current.color, sectionId, data.version],
-  )
+  await sql`
+    UPDATE sections
+    SET label = ${data.label ?? current.label}, color = ${data.color ?? current.color}, version = version + 1
+    WHERE id = ${sectionId} AND version = ${data.version}
+  `
 
-  const updated = db
-    .query<SectionRow, [string]>('SELECT * FROM sections WHERE id = ?')
-    .get(sectionId)!
-  return { status: 'ok', data: rowToSection(updated, db) }
+  const [updated] = await sql<SectionRow[]>`SELECT * FROM sections WHERE id = ${sectionId}`
+  return { status: 'ok', data: await rowToSection(updated, sql) }
 }
 
-export function deleteSection(db: Database, sectionId: string): boolean {
-  db.run('DELETE FROM sections WHERE id = ?', [sectionId])
+export async function deleteSection(sql: Sql, sectionId: string): Promise<boolean> {
+  await sql`DELETE FROM sections WHERE id = ${sectionId}`
   return true
 }

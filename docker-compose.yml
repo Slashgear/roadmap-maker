@@ -1,0 +1,50 @@
+services:
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  # Required by the team app and by unit tests (DATABASE_URL).
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: roadmaps
+      POSTGRES_PASSWORD: roadmaps
+      POSTGRES_DB: roadmaps
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'roadmaps']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Static app ────────────────────────────────────────────────────────────────
+  # Personal use — data stored in the browser (localStorage), no backend needed.
+  # Usage: docker compose up app-static
+  app-static:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    profiles: [static]
+
+  # ── Team app ──────────────────────────────────────────────────────────────────
+  # Collaborative mode — PostgreSQL + real-time SSE.
+  # Usage: AUTH_TOKEN=secret docker compose up app-team
+  app-team:
+    build:
+      context: .
+      dockerfile: Dockerfile.team
+    ports:
+      - '8080:8080'
+    environment:
+      STORAGE: postgres
+      DATABASE_URL: postgres://roadmaps:roadmaps@postgres:5432/roadmaps
+      AUTH_TOKEN: ${AUTH_TOKEN:?AUTH_TOKEN env var is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: [team]
+
+volumes:
+  pgdata:
