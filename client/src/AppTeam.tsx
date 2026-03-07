@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { nanoid } from 'nanoid'
 import type { ComponentChildren } from 'preact'
 import type { Roadmap, Section, Task } from './types'
-import { STATUS_COLOR, STATUS_LABEL, TASK_STATUSES } from './types'
+import { STATUS_COLOR, STATUS_LABEL, TASK_STATUSES, getBarStyle, getDiamondStyle } from './types'
 import GanttChart from './components/GanttChart'
 import TaskModal from './components/TaskModal'
 import SectionModal from './components/SectionModal'
@@ -660,13 +660,11 @@ export default function AppTeam() {
               {(['bar', 'milestone'] as const).map((type) =>
                 TASK_STATUSES.map((status) => {
                   const color = STATUS_COLOR[status]
-                  const isPending = status === 'pending'
-                  const barBg = isPending
-                    ? `repeating-linear-gradient(-45deg, ${color}55 0px, ${color}55 5px, ${color}aa 5px, ${color}aa 10px)`
-                    : color
-                  const barBorder = isPending ? `1.5px solid ${color}` : 'none'
-                  const diamondBg = isPending ? 'transparent' : color
-                  const diamondBorder = isPending ? `1.5px solid ${color}` : 'none'
+                  const { background: barBg, border: barBorder } = getBarStyle(status, color)
+                  const { background: diamondBg, border: diamondBorder } = getDiamondStyle(
+                    status,
+                    color,
+                  )
                   return (
                     <div
                       key={`${type}-${status}`}

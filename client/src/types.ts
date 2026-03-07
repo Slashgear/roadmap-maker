@@ -133,6 +133,51 @@ export const STATUS_TEXT: Record<TaskStatus, string> = {
 }
 
 // Labels differ between bar and milestone for the same status
+// Visual style helpers — ensure status is never conveyed by color alone (WCAG 1.4.1)
+export function getBarStyle(
+  status: TaskStatus,
+  color: string,
+): { background: string; border: string } {
+  if (status === 'started')
+    return {
+      background: [
+        `repeating-linear-gradient(45deg, rgba(255,255,255,.22) 0px, rgba(255,255,255,.22) 3px, transparent 3px, transparent 9px)`,
+        color,
+      ].join(', '),
+      border: 'none',
+    }
+  if (status === 'pending')
+    return {
+      background: `repeating-linear-gradient(-45deg, ${color}55 0px, ${color}55 5px, ${color}aa 5px, ${color}aa 10px)`,
+      border: `1.5px dashed ${color}`,
+    }
+  if (status === 'critical')
+    return {
+      background: [
+        `repeating-linear-gradient(45deg, rgba(0,0,0,.2) 0px, rgba(0,0,0,.2) 2px, transparent 2px, transparent 8px)`,
+        `repeating-linear-gradient(-45deg, rgba(0,0,0,.2) 0px, rgba(0,0,0,.2) 2px, transparent 2px, transparent 8px)`,
+        color,
+      ].join(', '),
+      border: 'none',
+    }
+  if (status === 'done') return { background: `${color}88`, border: `1.5px solid ${color}` }
+  // confirmed — solid, no border
+  return { background: color, border: 'none' }
+}
+
+export function getDiamondStyle(
+  status: TaskStatus,
+  color: string,
+): { background: string; border: string } {
+  if (status === 'started') return { background: color, border: `2px solid rgba(255,255,255,.6)` }
+  if (status === 'pending') return { background: 'transparent', border: `2px dashed ${color}` }
+  if (status === 'critical')
+    return { background: color, border: `2.5px solid rgba(255,255,255,.85)` }
+  if (status === 'done') return { background: `${color}88`, border: `2px solid ${color}88` }
+  // confirmed — solid, no border
+  return { background: color, border: 'none' }
+}
+
 export const STATUS_LABEL: Record<TaskType, Record<TaskStatus, string>> = {
   bar: {
     confirmed: 'Confirmed',

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'preact/hooks'
 import { nanoid } from 'nanoid'
 import type { ComponentChildren } from 'preact'
 import type { Roadmap, Section, Task } from './types'
-import { STATUS_COLOR, STATUS_LABEL, TASK_STATUSES } from './types'
+import { STATUS_COLOR, STATUS_LABEL, TASK_STATUSES, getBarStyle, getDiamondStyle } from './types'
 const EXAMPLES: Array<{ slug: string; title: string; subtitle: string | null }> = [
   { slug: 'design-system', title: 'Design System 2.0', subtitle: 'May → Nov 2026' },
   { slug: 'saas-launch', title: 'SaaS Launch', subtitle: 'Mar → Aug 2026' },
@@ -685,14 +685,11 @@ export default function App() {
               {(['bar', 'milestone'] as const).map((type) =>
                 TASK_STATUSES.map((status) => {
                   const color = STATUS_COLOR[status]
-                  const isPending = status === 'pending'
-
-                  const barBg = isPending
-                    ? `repeating-linear-gradient(-45deg, ${color}55 0px, ${color}55 5px, ${color}aa 5px, ${color}aa 10px)`
-                    : color
-                  const barBorder = isPending ? `1.5px solid ${color}` : 'none'
-                  const diamondBg = isPending ? 'transparent' : color
-                  const diamondBorder = isPending ? `1.5px solid ${color}` : 'none'
+                  const { background: barBg, border: barBorder } = getBarStyle(status, color)
+                  const { background: diamondBg, border: diamondBorder } = getDiamondStyle(
+                    status,
+                    color,
+                  )
 
                   return (
                     <div

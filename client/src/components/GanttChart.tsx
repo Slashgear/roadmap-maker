@@ -1,6 +1,14 @@
 import { useMemo, useState, useEffect } from 'preact/hooks'
 import type { Roadmap, Section, Task } from '../types'
-import { COLOR_HEX, SECTION_BG, STATUS_COLOR, STATUS_LABEL, STATUS_TEXT } from '../types'
+import {
+  COLOR_HEX,
+  SECTION_BG,
+  STATUS_COLOR,
+  STATUS_LABEL,
+  STATUS_TEXT,
+  getBarStyle,
+  getDiamondStyle,
+} from '../types'
 
 const MIN_CHART_W = 700
 
@@ -232,28 +240,13 @@ export default function GanttChart({
                 const color = STATUS_COLOR[task.status]
                 const textColor = STATUS_TEXT[task.status]
                 const isPending = task.status === 'pending'
-                const isDone = task.status === 'done'
 
-                // Bar visuals per status
-                const barBg = isPending
-                  ? `repeating-linear-gradient(-45deg, ${color}55 0px, ${color}55 5px, ${color}aa 5px, ${color}aa 10px)`
-                  : isDone
-                    ? `${color}88`
-                    : color
-                const barBorder = isPending
-                  ? `1.5px solid ${color}`
-                  : isDone
-                    ? `1.5px solid ${color}`
-                    : 'none'
+                const { background: barBg, border: barBorder } = getBarStyle(task.status, color)
                 const barColor = isPending ? color : textColor
-
-                // Milestone visuals per status
-                const diamondBg = isPending ? 'transparent' : isDone ? `${color}88` : color
-                const diamondBorder = isPending
-                  ? `2px solid ${color}`
-                  : isDone
-                    ? `2px solid ${color}88`
-                    : 'none'
+                const { background: diamondBg, border: diamondBorder } = getDiamondStyle(
+                  task.status,
+                  color,
+                )
 
                 return (
                   <>
