@@ -1,5 +1,11 @@
 # @slashgear/roadmap-maker
 
+## 1.7.0
+
+### Minor Changes
+
+- 9dd6736: Migrate team mode from SQLite to PostgreSQL. The server now connects via `DATABASE_URL` (postgres tagged-template client). Docker Compose updated with postgres service and app profiles. README and CONTRIBUTING updated accordingly.
+
 ## 1.6.0
 
 ### Minor Changes
