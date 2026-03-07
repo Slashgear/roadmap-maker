@@ -1,5 +1,66 @@
 # @slashgear/roadmap-maker
 
+## 1.10.0
+
+### Minor Changes
+
+- 98ae422: Add collapsible sections to the Gantt chart
+
+  - Each section header now has a chevron toggle button to collapse/expand its task rows
+  - Collapsed sections show a task count badge `(N)` next to the section label
+  - Chevron rotates 90° with a CSS transition to indicate state
+  - Fully accessible: `aria-expanded` on the toggle button, descriptive `aria-label` on both buttons
+  - Section header restructured from a single button to a `<div>` with two separate buttons (chevron + edit label) to avoid invalid nested `<button>` HTML
+
+- 6a53186: Improve colorblind accessibility for task status indicators
+
+  - Each task status now has a distinct visual pattern in addition to color (WCAG 1.4.1 — Use of Color)
+    - `confirmed`: solid fill (unchanged)
+    - `started`: diagonal stripes `/`
+    - `pending`: diagonal stripes `\` + dashed border (previously solid)
+    - `critical`: cross-hatch `#`
+    - `done`: faded fill + solid border (unchanged)
+  - Milestone diamonds: `started` and `critical` get distinct borders to differentiate at small sizes
+  - Logic centralized in `getBarStyle()` and `getDiamondStyle()` helpers in `types.ts`, removing duplication across GanttChart, and both app legends
+
+- d0f8fa3: Add SVG export for Gantt chart
+
+  - New "Export SVG" option in the action menu (static and team modes)
+  - Extracts chart capture logic into a shared `captureChart()` helper, removing duplication between PNG and SVG exports
+
+- 1ae0585: Add real-time user presence in team mode
+
+  - Each user who opens a roadmap appears as a colored avatar in the toolbar
+  - Display name is set on the login screen (optional, persisted to localStorage)
+  - A stable client ID is generated once per browser session (localStorage) and used as a deterministic color seed
+  - Presence is tracked server-side via the existing SSE connection — no separate heartbeat needed; connect = join, disconnect = leave
+  - Server broadcasts `presence_updated` to all viewers of the roadmap on every join/leave
+  - Current user's avatar has a colored ring to distinguish them from others
+  - Up to 4 avatars shown; overflow shown as `+N`
+
+- 00cb081: Add URL sharing for static mode
+
+  - "Copy link" button generates a shareable URL with the roadmap encoded via lz-string
+  - Opening a shared URL silently imports the roadmap into localStorage and cleans the URL
+  - lz-string is loaded lazily (dynamic import) — zero cost when the feature is not used
+
+- acff35b: Refactor toolbar and add undo/redo for static mode
+
+  - Unified `···` dropdown replaces the duplicated desktop/mobile action blocks
+  - Dropdown groups: settings, copy link / exports / import / examples — with separators
+  - Escape key closes the dropdown
+  - Undo (Ctrl+Z / ⌘Z) and Redo (Ctrl+Y / ⌘Y / ⌘⇧Z) with up to 50 history entries
+  - Undo/Redo buttons show visible text label alongside decorative icon (accessible)
+  - `Btn` component now supports `disabled`, `title`, and `aria-label` props
+
+- ae72ea1: Add timeline zoom presets (1M, 3M, 6M, 1Y) and skip link to date range controls
+
+  - New `ViewRangeControls` component replacing duplicated view range blocks in App and AppTeam
+  - Segmented control with 1M / 3M / 6M / 1Y presets that set the view window from today
+  - Active preset highlighted; deselected automatically when dates are changed manually
+  - Skip link "Skip to date range" added alongside the existing "Skip to chart" link
+  - Accessible: `role="group"` + `aria-label` on preset group, `aria-pressed` on each button, full text `aria-label` on abbreviated labels
+
 ## 1.9.0
 
 ### Minor Changes
