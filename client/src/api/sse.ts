@@ -1,5 +1,7 @@
 import type { Roadmap, Section, Task } from '../types'
 
+export type PresenceUser = { id: string; name: string; color: string }
+
 export type SSEEvent =
   | { type: 'init'; payload: Roadmap }
   | { type: 'roadmap_updated'; payload: Omit<Roadmap, 'sections'> }
@@ -10,6 +12,7 @@ export type SSEEvent =
   | { type: 'task_added'; payload: Task }
   | { type: 'task_updated'; payload: Task }
   | { type: 'task_deleted'; payload: { id: string; sectionId: string } }
+  | { type: 'presence_updated'; payload: { users: PresenceUser[] } }
 
 type Handler<T> = (payload: T) => void
 type HandlerMap = {
@@ -22,9 +25,14 @@ export class SSEManager {
   private es: EventSource | null = null
   private handlers: Partial<HandlerMap> = {}
 
-  connect(slug: string) {
+  connect(slug: string, opts?: { clientId?: string; name?: string; color?: string }) {
     this.disconnect()
-    this.es = new EventSource(`/api/roadmaps/${slug}/events`)
+    const params = new URLSearchParams()
+    if (opts?.clientId) params.set('clientId', opts.clientId)
+    if (opts?.name) params.set('name', opts.name)
+    if (opts?.color) params.set('color', opts.color)
+    const qs = params.toString()
+    this.es = new EventSource(`/api/roadmaps/${slug}/events${qs ? '?' + qs : ''}`)
     this.es.addEventListener('message', (e: MessageEvent) => {
       try {
         const event = JSON.parse(e.data as string) as SSEEvent

@@ -9,6 +9,7 @@ import SectionModal from './components/SectionModal'
 import RoadmapModal from './components/RoadmapModal'
 import { api } from './api/client'
 import { SSEManager } from './api/sse'
+import type { PresenceUser } from './api/sse'
 import ViewRangeControls from './components/ViewRangeControls'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -50,10 +51,32 @@ function defaultViewDates() {
 
 const sseManager = new SSEManager()
 
+// ── Presence helpers ───────────────────────────────────────────────────────────
+
+const PRESENCE_COLORS = [
+  '#7c3aed',
+  '#2563eb',
+  '#059669',
+  '#d97706',
+  '#dc2626',
+  '#0891b2',
+  '#9333ea',
+  '#16a34a',
+  '#ea580c',
+  '#db2777',
+]
+
+function presenceColor(id: string): string {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return PRESENCE_COLORS[h % PRESENCE_COLORS.length]
+}
+
 // ── Login screen ──────────────────────────────────────────────────────────────
 
 function LoginScreen({ onAuth }: { onAuth: () => void }) {
   const [token, setToken] = useState('')
+  const [name, setName] = useState(() => localStorage.getItem('presence_name') ?? '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -64,6 +87,7 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
     const { status } = await api.post('/auth', { token })
     setLoading(false)
     if (status === 200) {
+      localStorage.setItem('presence_name', name.trim() || 'Anonymous')
       onAuth()
     } else {
       setError('Invalid token. Please try again.')
@@ -94,6 +118,23 @@ function LoginScreen({ onAuth }: { onAuth: () => void }) {
               autoFocus
             />
           </div>
+          <div>
+            <label
+              htmlFor="display-name"
+              className="block text-[12px] text-gray-400 mb-1.5 font-medium uppercase tracking-wide"
+            >
+              Display name <span className="normal-case font-normal text-gray-500">(optional)</span>
+            </label>
+            <input
+              id="display-name"
+              type="text"
+              value={name}
+              onInput={(e) => setName(e.currentTarget.value)}
+              placeholder="Your name"
+              maxLength={32}
+              className="w-full bg-app-bg border border-app-border rounded-lg px-3.5 py-2.5 text-[13px] text-app-text focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+          </div>
           {error && <p className="text-red-400 text-[12px]">{error}</p>}
           <button
             type="submit"
@@ -115,6 +156,15 @@ export default function AppTeam() {
   const [roadmaps, setRoadmaps] = useState<Omit<Roadmap, 'sections'>[]>([])
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
+  const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([])
+  const [clientId] = useState(() => {
+    let id = localStorage.getItem('presence_client_id')
+    if (!id) {
+      id = nanoid()
+      localStorage.setItem('presence_client_id', id)
+    }
+    return id
+  })
   const [viewStart, setViewStart] = useState(() => defaultViewDates().start)
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
@@ -169,8 +219,11 @@ export default function AppTeam() {
   useEffect(() => {
     if (!roadmap) return
 
-    sseManager.connect(roadmap.slug)
+    const name = localStorage.getItem('presence_name') || 'Anonymous'
+    const color = presenceColor(clientId)
+    sseManager.connect(roadmap.slug, { clientId, name, color })
 
+    sseManager.on('presence_updated', ({ users }) => setPresenceUsers(users))
     sseManager.on('init', (r) => setRoadmap(r))
 
     sseManager.on('roadmap_updated', (meta) => {
@@ -242,7 +295,10 @@ export default function AppTeam() {
       )
     })
 
-    return () => sseManager.disconnect()
+    return () => {
+      sseManager.disconnect()
+      setPresenceUsers([])
+    }
   }, [roadmap?.slug]) // reconnect only when slug changes
 
   // ── Roadmap handlers ────────────────────────────────────────────────────────
@@ -704,13 +760,15 @@ export default function AppTeam() {
             />
           )}
 
-          {/* Team mode indicator */}
-          <div
-            data-testid="team-indicator"
-            className="flex items-center gap-1.5 mb-4 text-[11px] text-violet-400"
-          >
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            Team mode — changes sync in real-time
+          {/* Team mode indicator + presence */}
+          <div data-testid="team-indicator" className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-violet-400">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+              Team mode — changes sync in real-time
+            </div>
+            {presenceUsers.length > 0 && (
+              <PresenceAvatars users={presenceUsers} currentClientId={clientId} />
+            )}
           </div>
 
           {/* Chart */}
@@ -825,6 +883,56 @@ function Btn({
     >
       {children}
     </button>
+  )
+}
+
+function PresenceAvatars({
+  users,
+  currentClientId,
+}: {
+  users: PresenceUser[]
+  currentClientId: string
+}) {
+  const MAX_VISIBLE = 4
+  const visible = users.slice(0, MAX_VISIBLE)
+  const overflow = users.length - MAX_VISIBLE
+
+  return (
+    <div
+      className="flex items-center gap-2"
+      aria-label={`${users.length} user${users.length > 1 ? 's' : ''} online`}
+    >
+      <span className="text-[11px] text-gray-500">{users.length} online</span>
+      <div className="flex -space-x-1.5">
+        {visible.map((u) => {
+          const isMe = u.id === currentClientId
+          return (
+            <div
+              key={u.id}
+              title={isMe ? `${u.name} (you)` : u.name}
+              aria-label={isMe ? `${u.name} (you)` : u.name}
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 select-none"
+              style={{
+                background: u.color,
+                boxShadow: isMe ? `0 0 0 2px #1e1e2e, 0 0 0 3.5px ${u.color}` : '0 0 0 2px #1e1e2e',
+              }}
+            >
+              {u.name.slice(0, 2).toUpperCase()}
+            </div>
+          )
+        })}
+        {overflow > 0 && (
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 bg-gray-600 select-none"
+            style={{ boxShadow: '0 0 0 2px #1e1e2e' }}
+            title={`${overflow} more`}
+            aria-label={`${overflow} more users`}
+          >
+            +{overflow}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

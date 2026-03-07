@@ -18,6 +18,8 @@ import { createTask, updateTask, deleteTask } from '../db/tasks'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+type PresenceUser = { id: string; name: string; color: string }
+
 type SSEPayload =
   | { type: 'init'; payload: Roadmap }
   | { type: 'roadmap_updated'; payload: Omit<Roadmap, 'sections'> }
@@ -28,6 +30,7 @@ type SSEPayload =
   | { type: 'task_added'; payload: Task }
   | { type: 'task_updated'; payload: Task }
   | { type: 'task_deleted'; payload: { id: string; sectionId: string } }
+  | { type: 'presence_updated'; payload: { users: PresenceUser[] } }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -42,13 +45,19 @@ function slugify(title: string): string {
 
 export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken: string): Hono {
   const app = new Hono()
-  const sseClients = new Map<string, Set<(data: string) => void>>()
+  const sseClients = new Map<string, Map<string, (data: string) => void>>()
+  const ssePresence = new Map<string, Map<string, PresenceUser>>()
 
   function broadcast(slug: string, event: SSEPayload) {
     const clients = sseClients.get(slug)
     if (!clients || clients.size === 0) return
     const data = JSON.stringify(event)
     clients.forEach((send) => send(data))
+  }
+
+  function broadcastPresence(slug: string) {
+    const users = [...(ssePresence.get(slug)?.values() ?? [])]
+    broadcast(slug, { type: 'presence_updated', payload: { users } })
   }
 
   const auth = authMiddleware(sessions)
@@ -231,23 +240,37 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
     const roadmap = await getRoadmapBySlug(sql, slug)
     if (!roadmap) return c.json({ error: 'Not found' }, 404)
 
+    const clientId = c.req.query('clientId') || nanoid()
+    const name = c.req.query('name') || 'Anonymous'
+    const color = c.req.query('color') || '#7c3aed'
+
     return streamSSE(c, async (stream) => {
       const send = (data: string) => {
         stream.writeSSE({ data, event: 'message' })
       }
 
-      if (!sseClients.has(slug)) sseClients.set(slug, new Set())
-      sseClients.get(slug)!.add(send)
+      if (!sseClients.has(slug)) sseClients.set(slug, new Map())
+      if (!ssePresence.has(slug)) ssePresence.set(slug, new Map())
+      sseClients.get(slug)!.set(clientId, send)
+      ssePresence.get(slug)!.set(clientId, { id: clientId, name, color })
+      broadcastPresence(slug)
 
-      // Send retry interval + initial state
+      // Send retry interval + initial presence + initial state
       await stream.writeSSE({ data: '', retry: 3000 })
+      const users = [...(ssePresence.get(slug)?.values() ?? [])]
+      await stream.writeSSE({
+        data: JSON.stringify({ type: 'presence_updated', payload: { users } }),
+        event: 'message',
+      })
       await stream.writeSSE({
         data: JSON.stringify({ type: 'init', payload: await getRoadmapBySlug(sql, slug) }),
         event: 'message',
       })
 
       stream.onAbort(() => {
-        sseClients.get(slug)?.delete(send)
+        sseClients.get(slug)?.delete(clientId)
+        ssePresence.get(slug)?.delete(clientId)
+        broadcastPresence(slug)
       })
 
       // Keep-alive ping every 30s
