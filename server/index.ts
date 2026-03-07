@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { logger } from 'hono/logger'
 import { serveStatic } from 'hono/bun'
 import { join, resolve } from 'path'
 import type { Sql } from 'postgres'
@@ -20,6 +21,10 @@ const SECURITY_HEADERS: Record<string, string> = {
 }
 
 const app = new Hono()
+
+if (process.env.NODE_ENV !== 'test') {
+  app.use('*', logger())
+}
 
 // Security headers on all responses
 app.use('*', async (c, next) => {
