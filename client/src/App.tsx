@@ -422,27 +422,55 @@ export default function App() {
     URL.revokeObjectURL(a.href)
   }
 
-  async function handleExportPng() {
-    if (!roadmap) return
+  async function captureChart() {
     const outer = document.getElementById('main-chart')?.firstElementChild as HTMLElement | null
-    if (!outer) return
+    if (!outer) return null
     const scrollDiv = outer.querySelector<HTMLElement>(':scope > div')
     const prevOuter = outer.style.overflow
     const prevScroll = scrollDiv?.style.overflow ?? ''
     outer.style.overflow = 'visible'
     if (scrollDiv) scrollDiv.style.overflow = 'visible'
-    const w = outer.scrollWidth
-    const h = outer.scrollHeight
+    return {
+      outer,
+      scrollDiv,
+      w: outer.scrollWidth,
+      h: outer.scrollHeight,
+      restore() {
+        outer.style.overflow = prevOuter
+        if (scrollDiv) scrollDiv.style.overflow = prevScroll
+      },
+    }
+  }
+
+  async function handleExportPng() {
+    if (!roadmap) return
+    const capture = await captureChart()
+    if (!capture) return
     try {
       const { toPng } = await import('html-to-image')
-      const url = await toPng(outer, { pixelRatio: 2, width: w, height: h })
+      const url = await toPng(capture.outer, { pixelRatio: 2, width: capture.w, height: capture.h })
       const a = document.createElement('a')
       a.href = url
       a.download = `${roadmap.slug}-gantt.png`
       a.click()
     } finally {
-      outer.style.overflow = prevOuter
-      if (scrollDiv) scrollDiv.style.overflow = prevScroll
+      capture.restore()
+    }
+  }
+
+  async function handleExportSvg() {
+    if (!roadmap) return
+    const capture = await captureChart()
+    if (!capture) return
+    try {
+      const { toSvg } = await import('html-to-image')
+      const url = await toSvg(capture.outer, { width: capture.w, height: capture.h })
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${roadmap.slug}-gantt.svg`
+      a.click()
+    } finally {
+      capture.restore()
     }
   }
 
@@ -577,6 +605,14 @@ export default function App() {
                           }}
                         >
                           Export PNG
+                        </DropdownItem>
+                        <DropdownItem
+                          onClick={() => {
+                            setMoreOpen(false)
+                            void handleExportSvg()
+                          }}
+                        >
+                          Export SVG
                         </DropdownItem>
                         <DropdownSeparator />
                       </>
