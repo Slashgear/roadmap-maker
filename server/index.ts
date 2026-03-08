@@ -20,14 +20,19 @@ if (STORAGE_MODE === 'postgres') {
   }
 }
 
+const CSP_DEFAULT =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+// Swagger UI loads its assets from cdn.jsdelivr.net — relax CSP for the docs page only
+const CSP_DOCS =
+  "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-  'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 }
 
 const app = new Hono()
@@ -40,6 +45,7 @@ if (process.env.NODE_ENV !== 'test') {
 app.use('*', async (c, next) => {
   await next()
   for (const [k, v] of Object.entries(SECURITY_HEADERS)) c.res.headers.set(k, v)
+  c.res.headers.set('Content-Security-Policy', c.req.path === '/api/docs' ? CSP_DOCS : CSP_DEFAULT)
 })
 
 // API routes — team mode only (dynamic import keeps postgres out of static bundle)
