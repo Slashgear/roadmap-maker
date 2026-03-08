@@ -15,7 +15,7 @@
 - [ ] Afficher un toast d'erreur sur les échecs API (mode team) — actuellement les erreurs sont avalées silencieusement
 - [x] Améliorer les messages d'erreur Zod lors d'un import invalide (message technique exposé à l'utilisateur)
 - [x] Extraire les statuts (`confirmed | started | pending | critical | done`) en constantes partagées
-- [ ] Ajouter des états de chargement sur les boutons async (export PNG/SVG, actions mode team)
+- [x] Ajouter des états de chargement sur les boutons async (export PNG/SVG, actions mode team)
 
 ## Performance
 

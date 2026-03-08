@@ -169,6 +169,7 @@ export default function AppTeam() {
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
 
@@ -436,9 +437,13 @@ export default function AppTeam() {
   }
 
   async function handleExportPng() {
-    if (!roadmap) return
+    if (!roadmap || isExporting) return
+    setIsExporting(true)
     const capture = await captureChart()
-    if (!capture) return
+    if (!capture) {
+      setIsExporting(false)
+      return
+    }
     try {
       const { toPng } = await import('html-to-image')
       const url = await toPng(capture.outer, { pixelRatio: 2, width: capture.w, height: capture.h })
@@ -448,13 +453,18 @@ export default function AppTeam() {
       a.click()
     } finally {
       capture.restore()
+      setIsExporting(false)
     }
   }
 
   async function handleExportSvg() {
-    if (!roadmap) return
+    if (!roadmap || isExporting) return
+    setIsExporting(true)
     const capture = await captureChart()
-    if (!capture) return
+    if (!capture) {
+      setIsExporting(false)
+      return
+    }
     try {
       const { toSvg } = await import('html-to-image')
       const url = await toSvg(capture.outer, { width: capture.w, height: capture.h })
@@ -464,6 +474,7 @@ export default function AppTeam() {
       a.click()
     } finally {
       capture.restore()
+      setIsExporting(false)
     }
   }
 
@@ -641,20 +652,22 @@ export default function AppTeam() {
                           Export JSON
                         </DropdownItem>
                         <DropdownItem
+                          disabled={isExporting}
                           onClick={() => {
                             setMoreOpen(false)
                             void handleExportPng()
                           }}
                         >
-                          Export PNG
+                          {isExporting ? 'Exporting…' : 'Export PNG'}
                         </DropdownItem>
                         <DropdownItem
+                          disabled={isExporting}
                           onClick={() => {
                             setMoreOpen(false)
                             void handleExportSvg()
                           }}
                         >
-                          Export SVG
+                          {isExporting ? 'Exporting…' : 'Export SVG'}
                         </DropdownItem>
                         <DropdownSeparator />
                       </>
@@ -881,12 +894,21 @@ function Btn({
   )
 }
 
-function DropdownItem({ children, onClick }: { children: ComponentChildren; onClick: () => void }) {
+function DropdownItem({
+  children,
+  onClick,
+  disabled = false,
+}: {
+  children: ComponentChildren
+  onClick: () => void
+  disabled?: boolean
+}) {
   return (
     <button
       role="menuitem"
       onClick={onClick}
-      className="w-full text-left px-4 py-2.5 text-[13px] text-app-text hover:bg-white/5 cursor-pointer bg-transparent flex flex-col focus-visible:outline-none focus-visible:bg-white/5"
+      disabled={disabled}
+      className="w-full text-left px-4 py-2.5 text-[13px] text-app-text hover:bg-white/5 cursor-pointer bg-transparent flex flex-col focus-visible:outline-none focus-visible:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {children}
     </button>
