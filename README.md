@@ -339,6 +339,7 @@ The team build adds a REST API backed by PostgreSQL and a real-time SSE stream. 
 - **Persistence**: PostgreSQL with foreign key cascades and optimistic locking
 - **Optimistic locking**: every entity has a `version` integer; PUT requests must include the current version. A mismatch returns `409 Conflict` with the server's current state.
 - **Real-time**: `GET /api/roadmaps/:slug/events` is an SSE stream. Every mutation broadcasts a typed event (`task_added`, `section_updated`…) to all connected clients.
+- **Audit log**: every create/update/delete is persisted in `roadmap_events` (PostgreSQL). Browse the history from the `···` menu → **History**.
 - **API docs**: Swagger UI at `/api/docs` (OpenAPI 3.0 spec at `/api/openapi.json`)
 
 ### Database schema
@@ -403,6 +404,7 @@ All endpoints are prefixed with `/api` and require authentication (session cooki
 | `PUT`    | `/api/roadmaps/:slug/sections/:sectionId/tasks/:id` | Update a task (requires `version`)      |
 | `DELETE` | `/api/roadmaps/:slug/sections/:sectionId/tasks/:id` | Delete a task                           |
 | `GET`    | `/api/roadmaps/:slug/events`                        | SSE stream (real-time updates)          |
+| `GET`    | `/api/roadmaps/:slug/history`                       | Audit log (last N events, newest first) |
 | `GET`    | `/api/openapi.json`                                 | OpenAPI 3.0 spec                        |
 | `GET`    | `/api/docs`                                         | Swagger UI                              |
 
