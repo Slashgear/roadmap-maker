@@ -3,21 +3,27 @@ declare global {
   const __APP_MODE__: string
 }
 
-export type TaskStatus = 'confirmed' | 'started' | 'pending' | 'critical' | 'done'
-export type SectionColor =
-  | 'orange'
-  | 'purple'
-  | 'cyan'
-  | 'green'
-  | 'pink'
-  | 'blue'
-  | 'amber'
-  | 'indigo'
-  | 'lime'
-  | 'rose'
-  | 'teal'
-  | 'slate'
-export type TaskType = 'bar' | 'milestone'
+export const TASK_STATUSES = ['confirmed', 'started', 'pending', 'critical', 'done'] as const
+export type TaskStatus = (typeof TASK_STATUSES)[number]
+
+export const SECTION_COLORS = [
+  'orange',
+  'purple',
+  'cyan',
+  'green',
+  'pink',
+  'blue',
+  'amber',
+  'indigo',
+  'lime',
+  'rose',
+  'teal',
+  'slate',
+] as const
+export type SectionColor = (typeof SECTION_COLORS)[number]
+
+export const TASK_TYPES = ['bar', 'milestone'] as const
+export type TaskType = (typeof TASK_TYPES)[number]
 
 export interface Task {
   id: string
@@ -53,22 +59,6 @@ export interface Roadmap {
   sections: Section[]
   version?: number
 }
-
-export const SECTION_COLORS: SectionColor[] = [
-  'orange',
-  'purple',
-  'cyan',
-  'green',
-  'pink',
-  'blue',
-  'amber',
-  'indigo',
-  'lime',
-  'rose',
-  'teal',
-  'slate',
-]
-export const TASK_STATUSES: TaskStatus[] = ['confirmed', 'started', 'pending', 'critical', 'done']
 
 export const COLOR_HEX: Record<SectionColor, string> = {
   orange: '#f97316',

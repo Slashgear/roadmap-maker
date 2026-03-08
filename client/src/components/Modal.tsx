@@ -138,7 +138,7 @@ export function ColorPicker({
   labels,
   hexMap,
 }: {
-  colors: string[]
+  colors: readonly string[]
   value: string
   onChange: (color: string) => void
   labels: Record<string, string>
