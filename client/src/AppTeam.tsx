@@ -168,6 +168,7 @@ export default function AppTeam() {
   const [viewStart, setViewStart] = useState(() => defaultViewDates().start)
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
+  const [conflictNotice, setConflictNotice] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -338,8 +339,8 @@ export default function AppTeam() {
       ...data,
       version: roadmap.version ?? 1,
     })
-    if (status === 409) return // SSE will update state
     setModal(null)
+    if (status === 409) setConflictNotice(true)
   }
 
   async function handleDeleteRoadmap() {
@@ -364,8 +365,8 @@ export default function AppTeam() {
       ...data,
       version: section.version ?? 1,
     })
-    if (status === 409) return // SSE will update state
     setModal(null)
+    if (status === 409) setConflictNotice(true)
   }
 
   async function handleDeleteSection(section: Section) {
@@ -393,8 +394,8 @@ export default function AppTeam() {
       `/roadmaps/${roadmap.slug}/sections/${task.sectionId}/tasks/${task.id}`,
       { ...data, version: task.version ?? 1 },
     )
-    if (status === 409) return // SSE will update state with server version
     setModal(null)
+    if (status === 409) setConflictNotice(true)
   }
 
   async function handleDeleteTask(task: Task) {
@@ -766,6 +767,19 @@ export default function AppTeam() {
               onEndChange={setViewEnd}
               onReset={resetView}
             />
+          )}
+
+          {/* Conflict notice */}
+          {conflictNotice && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-[13px] text-amber-400">
+              Your changes conflicted with another edit — the latest version has been loaded.
+              <button
+                onClick={() => setConflictNotice(false)}
+                className="ml-auto cursor-pointer bg-transparent border-none text-amber-400 hover:text-amber-200"
+              >
+                ✕
+              </button>
+            </div>
           )}
 
           {/* Team mode indicator + presence */}

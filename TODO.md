@@ -25,7 +25,7 @@
 ## Robustesse / UX
 
 - [ ] Implémenter la reconnexion automatique du SSE avec backoff exponentiel
-- [ ] Afficher un feedback utilisateur sur les conflits de version 409 (actuellement ignoré silencieusement)
+- [x] Afficher un feedback utilisateur sur les conflits de version 409 (bannière amber + fermeture du modal)
 - [x] Valider les variables d'environnement au démarrage du serveur — `AUTH_TOKEN` et `DATABASE_URL` vérifiés ensemble, message clair avec les vars manquantes
 
 ## Fonctionnalités
