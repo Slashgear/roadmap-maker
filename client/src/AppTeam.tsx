@@ -253,6 +253,15 @@ export default function AppTeam() {
       )
     })
 
+    sseManager.on('sections_reordered', ({ ids }) => {
+      setRoadmap((prev) => {
+        if (!prev) return prev
+        const map = new Map(prev.sections.map((s) => [s.id, s]))
+        const reordered = ids.flatMap((id) => (map.has(id) ? [{ ...map.get(id)! }] : []))
+        return { ...prev, sections: reordered }
+      })
+    })
+
     sseManager.on('task_added', (task) => {
       setRoadmap((prev) =>
         prev
@@ -364,6 +373,18 @@ export default function AppTeam() {
     await api.delete(`/roadmaps/${roadmap.slug}/sections/${section.id}`)
     setModal(null)
     // SSE section_deleted event updates state
+  }
+
+  async function handleMoveSection(sectionId: string, direction: 'up' | 'down') {
+    if (!roadmap) return
+    const sections = [...roadmap.sections]
+    const idx = sections.findIndex((s) => s.id === sectionId)
+    if (idx < 0) return
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sections.length) return
+    ;[sections[idx], sections[swapIdx]] = [sections[swapIdx], sections[idx]]
+    await api.put(`/roadmaps/${roadmap.slug}/sections/reorder`, { ids: sections.map((s) => s.id) })
+    // SSE sections_reordered event updates state
   }
 
   // ── Task handlers ───────────────────────────────────────────────────────────
@@ -751,6 +772,7 @@ export default function AppTeam() {
                 onEditSection={(section) => setModal({ type: 'edit-section', section })}
                 onAddTask={(sectionId) => setModal({ type: 'add-task', sectionId })}
                 onEditTask={(task) => setModal({ type: 'edit-task', task })}
+                onMoveSection={handleMoveSection}
               />
             ) : (
               <TeamEmptyState onCreateRoadmap={() => setModal({ type: 'create-roadmap' })} />

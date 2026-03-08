@@ -13,7 +13,7 @@ import {
   updateRoadmap,
   deleteRoadmap,
 } from '../db/roadmaps'
-import { createSection, updateSection, deleteSection } from '../db/sections'
+import { createSection, updateSection, deleteSection, reorderSections } from '../db/sections'
 import { createTask, updateTask, deleteTask } from '../db/tasks'
 import { recordEvent, getEventsByRoadmapId } from '../db/events'
 
@@ -28,6 +28,7 @@ type SSEPayload =
   | { type: 'section_added'; payload: Section }
   | { type: 'section_updated'; payload: Section }
   | { type: 'section_deleted'; payload: { id: string } }
+  | { type: 'sections_reordered'; payload: { ids: string[] } }
   | { type: 'task_added'; payload: Task }
   | { type: 'task_updated'; payload: Task }
   | { type: 'task_deleted'; payload: { id: string; sectionId: string } }
@@ -173,6 +174,16 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
   })
 
   // ── Sections ────────────────────────────────────────────────────────────────
+
+  app.put('/roadmaps/:slug/sections/reorder', auth, async (c) => {
+    const slug = c.req.param('slug')
+    const roadmap = await getRoadmapBySlug(sql, slug)
+    if (!roadmap) return c.json({ error: 'Not found' }, 404)
+    const { ids } = await c.req.json<{ ids: string[] }>()
+    await reorderSections(sql, ids)
+    broadcast(slug, { type: 'sections_reordered', payload: { ids } })
+    return c.json({ ok: true })
+  })
 
   app.post('/roadmaps/:slug/sections', auth, async (c) => {
     const slug = c.req.param('slug')
@@ -709,6 +720,48 @@ Subscribe to \`GET /api/roadmaps/:slug/events\` (SSE) to receive live updates. T
           201: {
             description: 'Created',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Section' } } },
+          },
+          404: {
+            description: 'Roadmap not found',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
+    '/roadmaps/{slug}/sections/reorder': {
+      put: {
+        tags: ['sections'],
+        summary: 'Reorder sections',
+        description:
+          'Update the position of all sections by providing their IDs in the desired order.',
+        security: [{ cookieAuth: [] }],
+        parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['ids'],
+                properties: {
+                  ids: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Section IDs in desired order',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Reordered',
+            content: {
+              'application/json': {
+                schema: { type: 'object', properties: { ok: { type: 'boolean' } } },
+              },
+            },
           },
           404: {
             description: 'Roadmap not found',

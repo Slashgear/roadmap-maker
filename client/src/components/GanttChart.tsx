@@ -32,6 +32,7 @@ interface Props {
   onEditSection: (section: Section) => void
   onAddTask: (sectionId: string) => void
   onEditTask: (task: Task) => void
+  onMoveSection?: (sectionId: string, direction: 'up' | 'down') => void
 }
 
 function TimelineOverlay({ weekGrids, todayPct }: { weekGrids: number[]; todayPct: number }) {
@@ -79,6 +80,7 @@ export default function GanttChart({
   onEditSection,
   onAddTask,
   onEditTask,
+  onMoveSection,
 }: Props) {
   const isMobile = useIsMobile()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
@@ -210,8 +212,10 @@ export default function GanttChart({
           </div>
 
           {/* ── Sections ── */}
-          {roadmap.sections.map((section) => {
+          {roadmap.sections.map((section, index) => {
             const isCollapsed = collapsed.has(section.id)
+            const isFirst = index === 0
+            const isLast = index === roadmap.sections.length - 1
             return (
               <>
                 {/* Section header row */}
@@ -270,6 +274,30 @@ export default function GanttChart({
                       </span>
                     )}
                   </button>
+                  {onMoveSection && (
+                    <div className="flex flex-col shrink-0 mr-1">
+                      <button
+                        onClick={() => onMoveSection(section.id, 'up')}
+                        disabled={isFirst}
+                        aria-label={`Move section ${section.label} up`}
+                        className="flex items-center justify-center w-5 h-4 bg-transparent border-none text-gray-500 hover:text-white disabled:opacity-20 disabled:cursor-default cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 rounded-sm"
+                      >
+                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none" aria-hidden="true">
+                          <path d="M4 1L7 5H1L4 1Z" fill="currentColor" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => onMoveSection(section.id, 'down')}
+                        disabled={isLast}
+                        aria-label={`Move section ${section.label} down`}
+                        className="flex items-center justify-center w-5 h-4 bg-transparent border-none text-gray-500 hover:text-white disabled:opacity-20 disabled:cursor-default cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 rounded-sm"
+                      >
+                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none" aria-hidden="true">
+                          <path d="M4 5L1 1H7L4 5Z" fill="currentColor" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div
                   className="relative overflow-hidden border-b border-app-border"

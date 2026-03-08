@@ -9,6 +9,7 @@ export type SSEEvent =
   | { type: 'section_added'; payload: Section }
   | { type: 'section_updated'; payload: Section }
   | { type: 'section_deleted'; payload: { id: string } }
+  | { type: 'sections_reordered'; payload: { ids: string[] } }
   | { type: 'task_added'; payload: Task }
   | { type: 'task_updated'; payload: Task }
   | { type: 'task_deleted'; payload: { id: string; sectionId: string } }

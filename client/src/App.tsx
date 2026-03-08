@@ -295,6 +295,22 @@ export default function App() {
     setModal(null)
   }
 
+  function handleMoveSection(sectionId: string, direction: 'up' | 'down') {
+    if (!roadmap) return
+    const sections = [...roadmap.sections]
+    const idx = sections.findIndex((s) => s.id === sectionId)
+    if (idx < 0) return
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sections.length) return
+    ;[sections[idx], sections[swapIdx]] = [sections[swapIdx], sections[idx]]
+    const reordered = sections.map((s, i) => ({ ...s, position: i }))
+    const updated: Roadmap = { ...roadmap, sections: reordered }
+    updateRoadmaps(
+      roadmaps.map((r) => (r.id === roadmap.id ? updated : r)),
+      updated,
+    )
+  }
+
   // ── Task handlers ─────────────────────────────────────────────────────────
 
   function sortedByStartDate(tasks: Task[]): Task[] {
@@ -671,6 +687,7 @@ export default function App() {
                 onEditSection={(section) => setModal({ type: 'edit-section', section })}
                 onAddTask={(sectionId) => setModal({ type: 'add-task', sectionId })}
                 onEditTask={(task) => setModal({ type: 'edit-task', task })}
+                onMoveSection={handleMoveSection}
               />
             ) : (
               <EmptyState

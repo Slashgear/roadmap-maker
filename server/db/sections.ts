@@ -94,3 +94,9 @@ export async function deleteSection(sql: Sql, sectionId: string): Promise<boolea
   await sql`DELETE FROM sections WHERE id = ${sectionId}`
   return true
 }
+
+export async function reorderSections(sql: Sql, orderedIds: string[]): Promise<void> {
+  await Promise.all(
+    orderedIds.map((id, index) => sql`UPDATE sections SET position = ${index} WHERE id = ${id}`),
+  )
+}
