@@ -477,7 +477,10 @@ export default function AppTeam() {
       const { RoadmapSchema } = await import('./schemas')
       const result = RoadmapSchema.safeParse(json)
       if (!result.success) {
-        setImportError('Invalid roadmap file: ' + result.error.issues[0]?.message)
+        console.error('[import] Validation failed:', result.error.issues)
+        setImportError(
+          'Invalid roadmap file — make sure it was exported from roadmap-maker and has not been manually edited.',
+        )
         return
       }
       const imported = result.data as Roadmap
