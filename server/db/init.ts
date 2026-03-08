@@ -35,6 +35,8 @@ export async function applySchema(sql: Sql): Promise<void> {
     position      INTEGER NOT NULL,
     version       INTEGER NOT NULL DEFAULT 1
   )`
+  await sql`CREATE INDEX IF NOT EXISTS idx_sections_roadmap_id ON sections(roadmap_id)`
+  await sql`CREATE INDEX IF NOT EXISTS idx_tasks_section_id ON tasks(section_id)`
 }
 
 export async function createSql(url?: string): Promise<Sql> {

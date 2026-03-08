@@ -380,6 +380,8 @@ erDiagram
     sections ||--o{ tasks : "ON DELETE CASCADE"
 ```
 
+Indexes: `roadmaps.slug` (implicit from `UNIQUE`), `sections.roadmap_id`, `tasks.section_id`.
+
 ### API endpoints
 
 All endpoints are prefixed with `/api` and require authentication (session cookie) except `/api/auth`.

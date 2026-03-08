@@ -11,10 +11,10 @@
 
 ## Quick wins
 
-- [ ] Ajouter les indexes SQL manquants (`roadmaps.slug`, `sections.roadmap_id`, `tasks.section_id`)
+- [x] Ajouter les indexes SQL manquants (`roadmaps.slug`, `sections.roadmap_id`, `tasks.section_id`)
 - [ ] Afficher un toast d'erreur sur les échecs API (mode team) — actuellement les erreurs sont avalées silencieusement
 - [ ] Améliorer les messages d'erreur Zod lors d'un import invalide (message technique exposé à l'utilisateur)
-- [ ] Extraire les statuts (`confirmed | started | pending | critical | done`) en constantes partagées
+- [x] Extraire les statuts (`confirmed | started | pending | critical | done`) en constantes partagées
 - [ ] Ajouter des états de chargement sur les boutons async (export PNG/SVG, actions mode team)
 
 ## Performance
