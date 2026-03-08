@@ -19,12 +19,45 @@
 
 ![](./client/public/og-image.png)
 
+## Table of contents
+
+- [Features](#features)
+- [Getting started](#getting-started)
+- [Import / Export](#import--export)
+- [Import from Jira / GitLab / CSV (AI skill)](#import-from-jira--gitlab--csv-ai-skill)
+- [Examples](#examples)
+- [Data format](#data-format)
+- [Stack](#stack)
+- [Team mode](#team-mode)
+  - [How it works](#how-it-works)
+  - [Database schema](#database-schema)
+  - [API endpoints](#api-endpoints)
+  - [Build & run locally](#build--run-locally)
+  - [Docker (team)](#docker-team)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
 Two build modes:
 
 | Mode                 | Storage                        | Use case                            |
 | -------------------- | ------------------------------ | ----------------------------------- |
 | **Static** (default) | `localStorage` in the browser  | Personal use, no server needed      |
 | **Team**             | PostgreSQL on the server + SSE | Team use, changes sync in real-time |
+
+```mermaid
+flowchart LR
+    subgraph Static["Static mode"]
+        B1[Browser] <--> LS[localStorage]
+    end
+    subgraph Team["Team mode"]
+        B2[Browser] -->|REST API| H[Hono server]
+        H --> PG[(PostgreSQL)]
+        H -->|SSE stream| B2
+    end
+```
 
 ---
 
@@ -228,6 +261,7 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
   "subtitle": "Q1 2026", // optional
   "startDate": "2026-01-01", // YYYY-MM-DD
   "endDate": "2026-06-30",
+  "version": 3, // optional — optimistic locking counter (team mode only)
   "sections": [
     {
       "id": "sec-1",
@@ -235,6 +269,7 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
       "label": "🎨 Design",
       "color": "cyan", // orange | purple | cyan | green | pink | blue | amber | indigo | lime | rose | teal | slate
       "position": 0,
+      "version": 1, // optional — optimistic locking counter (team mode only)
       "tasks": [
         {
           "id": "task-1",
@@ -247,12 +282,17 @@ Roadmaps are plain JSON. The schema is validated on import using [Zod](https://z
           "note": "Optional context, decisions, links…",
           "externalLink": "https://yourorg.atlassian.net/browse/PROJ-42", // optional URL (Jira, GitHub, Linear…)
           "position": 0,
+          "version": 2, // optional — optimistic locking counter (team mode only)
         },
       ],
     },
   ],
 }
 ```
+
+### `version` field
+
+Each entity carries an integer `version` that increments on every write. In team mode, `PUT` requests must echo the current `version` — if it has changed in the meantime, the server responds `409 Conflict` with the latest state. This prevents lost updates when multiple users edit the same roadmap simultaneously. The field is optional in exported JSON files (ignored in static mode).
 
 ### Colors
 
@@ -299,6 +339,69 @@ The team build adds a REST API backed by PostgreSQL and a real-time SSE stream. 
 - **Optimistic locking**: every entity has a `version` integer; PUT requests must include the current version. A mismatch returns `409 Conflict` with the server's current state.
 - **Real-time**: `GET /api/roadmaps/:slug/events` is an SSE stream. Every mutation broadcasts a typed event (`task_added`, `section_updated`…) to all connected clients.
 - **API docs**: Swagger UI at `/api/docs` (OpenAPI 3.0 spec at `/api/openapi.json`)
+
+### Database schema
+
+```mermaid
+erDiagram
+    roadmaps {
+        TEXT id PK
+        TEXT slug UK
+        TEXT title
+        TEXT subtitle
+        TEXT start_date
+        TEXT end_date
+        INTEGER version
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+    sections {
+        TEXT id PK
+        TEXT roadmap_id FK
+        TEXT label
+        TEXT color
+        INTEGER position
+        INTEGER version
+    }
+    tasks {
+        TEXT id PK
+        TEXT section_id FK
+        TEXT label
+        TEXT start_date
+        TEXT end_date
+        TEXT status
+        TEXT type
+        TEXT note
+        TEXT external_link
+        INTEGER position
+        INTEGER version
+    }
+    roadmaps ||--o{ sections : "ON DELETE CASCADE"
+    sections ||--o{ tasks : "ON DELETE CASCADE"
+```
+
+### API endpoints
+
+All endpoints are prefixed with `/api` and require authentication (session cookie) except `/api/auth`.
+
+| Method   | Endpoint                                            | Description                             |
+| -------- | --------------------------------------------------- | --------------------------------------- |
+| `POST`   | `/api/auth`                                         | Authenticate with `AUTH_TOKEN` → cookie |
+| `GET`    | `/api/me`                                           | Check current session                   |
+| `GET`    | `/api/roadmaps`                                     | List all roadmaps                       |
+| `POST`   | `/api/roadmaps`                                     | Create a roadmap                        |
+| `GET`    | `/api/roadmaps/:slug`                               | Get a roadmap (with sections & tasks)   |
+| `PUT`    | `/api/roadmaps/:slug`                               | Update a roadmap (requires `version`)   |
+| `DELETE` | `/api/roadmaps/:slug`                               | Delete a roadmap                        |
+| `POST`   | `/api/roadmaps/:slug/sections`                      | Add a section                           |
+| `PUT`    | `/api/roadmaps/:slug/sections/:id`                  | Update a section (requires `version`)   |
+| `DELETE` | `/api/roadmaps/:slug/sections/:id`                  | Delete a section                        |
+| `POST`   | `/api/roadmaps/:slug/sections/:sectionId/tasks`     | Add a task                              |
+| `PUT`    | `/api/roadmaps/:slug/sections/:sectionId/tasks/:id` | Update a task (requires `version`)      |
+| `DELETE` | `/api/roadmaps/:slug/sections/:sectionId/tasks/:id` | Delete a task                           |
+| `GET`    | `/api/roadmaps/:slug/events`                        | SSE stream (real-time updates)          |
+| `GET`    | `/api/openapi.json`                                 | OpenAPI 3.0 spec                        |
+| `GET`    | `/api/docs`                                         | Swagger UI                              |
 
 ### Build & run locally
 
