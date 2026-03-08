@@ -10,6 +10,16 @@ const ROOT = process.env.PUBLIC_DIR
 const PORT = Number(process.env.PORT ?? 8080)
 const STORAGE_MODE = process.env.STORAGE ?? 'static'
 
+if (STORAGE_MODE === 'postgres') {
+  const missing = ['AUTH_TOKEN', 'DATABASE_URL'].filter((k) => !process.env[k])
+  if (missing.length > 0) {
+    console.error(
+      `[server] Missing required environment variables for postgres mode:\n${missing.map((k) => `  - ${k}`).join('\n')}`,
+    )
+    process.exit(1)
+  }
+}
+
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
@@ -36,11 +46,7 @@ app.use('*', async (c, next) => {
 let sql: Sql | null = null
 
 if (STORAGE_MODE === 'postgres') {
-  const authToken = process.env.AUTH_TOKEN ?? ''
-  if (!authToken) {
-    console.error('[server] AUTH_TOKEN env var is required in postgres mode')
-    process.exit(1)
-  }
+  const authToken = process.env.AUTH_TOKEN!
 
   const { createSql } = await import('./db/init')
   const { createApiRouter } = await import('./api/openapi')

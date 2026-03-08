@@ -334,6 +334,7 @@ The team build adds a REST API backed by PostgreSQL and a real-time SSE stream. 
 
 ### How it works
 
+- **Env validation**: `AUTH_TOKEN` and `DATABASE_URL` are required in postgres mode — the server exits immediately with a clear error listing all missing variables if any are absent
 - **Auth**: shared `AUTH_TOKEN` env var → session cookie (HttpOnly, 24h TTL)
 - **Persistence**: PostgreSQL with foreign key cascades and optimistic locking
 - **Optimistic locking**: every entity has a `version` integer; PUT requests must include the current version. A mismatch returns `409 Conflict` with the server's current state.

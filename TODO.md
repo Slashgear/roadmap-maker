@@ -26,7 +26,7 @@
 
 - [ ] Implémenter la reconnexion automatique du SSE avec backoff exponentiel
 - [ ] Afficher un feedback utilisateur sur les conflits de version 409 (actuellement ignoré silencieusement)
-- [ ] Valider les variables d'environnement au démarrage du serveur (Zod) — `AUTH_TOKEN` manquant détecté trop tard
+- [x] Valider les variables d'environnement au démarrage du serveur — `AUTH_TOKEN` et `DATABASE_URL` vérifiés ensemble, message clair avec les vars manquantes
 
 ## Fonctionnalités
 
