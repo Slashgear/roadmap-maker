@@ -103,6 +103,7 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false)
   const [copyDone, setCopyDone] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [roadmapSearch, setRoadmapSearch] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
 
@@ -512,6 +513,15 @@ export default function App() {
               {/* Roadmap picker */}
               {roadmaps.length > 0 && (
                 <>
+                  {roadmaps.length > 5 && (
+                    <input
+                      type="search"
+                      placeholder="Search roadmaps…"
+                      value={roadmapSearch}
+                      onInput={(e) => setRoadmapSearch(e.currentTarget.value)}
+                      className="bg-app-surface border border-app-border rounded-lg text-app-text px-2.5 py-1.5 text-[13px] w-40 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    />
+                  )}
                   <label htmlFor="roadmap-picker" className="sr-only">
                     Select roadmap
                   </label>
@@ -523,15 +533,22 @@ export default function App() {
                       if (r) {
                         setRoadmap(r)
                         window.location.hash = '#' + r.slug
+                        setRoadmapSearch('')
                       }
                     }}
                     className="bg-app-surface border border-app-border rounded-lg text-app-text px-2.5 py-1.5 text-[13px] cursor-pointer"
                   >
-                    {roadmaps.map((r) => (
-                      <option key={r.slug} value={r.slug}>
-                        {r.title}
-                      </option>
-                    ))}
+                    {roadmaps
+                      .filter((r) =>
+                        roadmapSearch
+                          ? r.title.toLowerCase().includes(roadmapSearch.toLowerCase())
+                          : true,
+                      )
+                      .map((r) => (
+                        <option key={r.slug} value={r.slug}>
+                          {r.title}
+                        </option>
+                      ))}
                   </select>
                 </>
               )}

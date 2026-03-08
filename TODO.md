@@ -30,7 +30,7 @@
 
 ## Fonctionnalités
 
-- [ ] Tri et recherche de roadmaps (actuellement ordre d'insertion uniquement)
+- [x] Recherche de roadmaps — input de filtrage par titre, visible à partir de 6 roadmaps (static + team)
 - [ ] Undo/redo en mode team (présent en mode static, absent en mode team)
 
 ## Code quality
