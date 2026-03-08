@@ -15,6 +15,7 @@ import {
 } from '../db/roadmaps'
 import { createSection, updateSection, deleteSection } from '../db/sections'
 import { createTask, updateTask, deleteTask } from '../db/tasks'
+import { recordEvent, getEventsByRoadmapId } from '../db/events'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,11 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
       startDate: body.startDate,
       endDate: body.endDate,
     })
+    await recordEvent(sql, roadmap.id, 'roadmap_created', {
+      id: roadmap.id,
+      slug: roadmap.slug,
+      title: roadmap.title,
+    })
     return c.json(roadmap, 201)
   })
 
@@ -144,6 +150,11 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
       type: 'roadmap_updated',
       payload: { ...result.data, sections: undefined as never },
     })
+    await recordEvent(sql, result.data.id, 'roadmap_updated', {
+      id: result.data.id,
+      slug: result.data.slug,
+      title: result.data.title,
+    })
     return c.json(result.data)
   })
 
@@ -151,6 +162,11 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
     const slug = c.req.param('slug')
     const exists = await getRoadmapBySlug(sql, slug)
     if (!exists) return c.json({ error: 'Not found' }, 404)
+    await recordEvent(sql, exists.id, 'roadmap_deleted', {
+      id: exists.id,
+      slug: exists.slug,
+      title: exists.title,
+    })
     broadcast(slug, { type: 'roadmap_deleted' })
     await deleteRoadmap(sql, slug)
     return new Response(null, { status: 204 })
@@ -169,6 +185,11 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
       color: body.color,
     })
     broadcast(slug, { type: 'section_added', payload: section })
+    await recordEvent(sql, roadmap.id, 'section_added', {
+      id: section.id,
+      label: section.label,
+      color: section.color,
+    })
     return c.json(section, 201)
   })
 
@@ -181,12 +202,21 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
     if (result.status === 'conflict')
       return c.json({ conflict: true, current: result.current }, 409)
     broadcast(slug, { type: 'section_updated', payload: result.data })
+    await recordEvent(sql, result.data.roadmapId, 'section_updated', {
+      id: result.data.id,
+      label: result.data.label,
+      color: result.data.color,
+    })
     return c.json(result.data)
   })
 
   app.delete('/roadmaps/:slug/sections/:id', auth, async (c) => {
     const slug = c.req.param('slug')
     const sectionId = c.req.param('id')
+    const roadmap = await getRoadmapBySlug(sql, slug)
+    if (roadmap) {
+      await recordEvent(sql, roadmap.id, 'section_deleted', { id: sectionId })
+    }
     await deleteSection(sql, sectionId)
     broadcast(slug, { type: 'section_deleted', payload: { id: sectionId } })
     return new Response(null, { status: 204 })
@@ -208,6 +238,14 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
     }>()
     const task = await createTask(sql, sectionId, { id: nanoid(), ...body })
     broadcast(slug, { type: 'task_added', payload: task })
+    const roadmap = await getRoadmapBySlug(sql, slug)
+    if (roadmap) {
+      await recordEvent(sql, roadmap.id, 'task_added', {
+        id: task.id,
+        label: task.label,
+        sectionId,
+      })
+    }
     return c.json(task, 201)
   })
 
@@ -221,6 +259,14 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
     if (result.status === 'conflict')
       return c.json({ conflict: true, current: result.current }, 409)
     broadcast(slug, { type: 'task_updated', payload: result.data })
+    const roadmap = await getRoadmapBySlug(sql, slug)
+    if (roadmap) {
+      await recordEvent(sql, roadmap.id, 'task_updated', {
+        id: result.data.id,
+        label: result.data.label,
+        sectionId,
+      })
+    }
     return c.json(result.data)
   })
 
@@ -228,9 +274,24 @@ export function createApiRouter(sql: Sql, sessions: Map<string, Date>, authToken
     const slug = c.req.param('slug')
     const sectionId = c.req.param('sectionId')
     const taskId = c.req.param('id')
+    const roadmap = await getRoadmapBySlug(sql, slug)
+    if (roadmap) {
+      await recordEvent(sql, roadmap.id, 'task_deleted', { id: taskId, sectionId })
+    }
     await deleteTask(sql, taskId)
     broadcast(slug, { type: 'task_deleted', payload: { id: taskId, sectionId } })
     return new Response(null, { status: 204 })
+  })
+
+  // ── History ─────────────────────────────────────────────────────────────────
+
+  app.get('/roadmaps/:slug/history', auth, async (c) => {
+    const slug = c.req.param('slug')
+    const roadmap = await getRoadmapBySlug(sql, slug)
+    if (!roadmap) return c.json({ error: 'Not found' }, 404)
+    const limit = Math.min(Number(c.req.query('limit') ?? 50), 200)
+    const events = await getEventsByRoadmapId(sql, roadmap.id, limit)
+    return c.json(events)
   })
 
   // ── SSE ─────────────────────────────────────────────────────────────────────
@@ -817,6 +878,51 @@ Subscribe to \`GET /api/roadmaps/:slug/events\` (SSE) to receive live updates. T
         ],
         responses: {
           204: { description: 'Deleted' },
+        },
+      },
+    },
+    '/roadmaps/{slug}/history': {
+      get: {
+        tags: ['history'],
+        summary: 'Get audit log for a roadmap',
+        description:
+          'Returns the last N events recorded for this roadmap (create/update/delete on roadmap, sections, and tasks).',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 50, maximum: 200 },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'List of events (newest first)',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    required: ['id', 'roadmapId', 'type', 'payload', 'createdAt'],
+                    properties: {
+                      id: { type: 'string' },
+                      roadmapId: { type: 'string' },
+                      type: { type: 'string', example: 'task_updated' },
+                      payload: { type: 'object' },
+                      createdAt: { type: 'string', format: 'date-time' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: {
+            description: 'Roadmap not found',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
         },
       },
     },

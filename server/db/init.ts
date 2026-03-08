@@ -37,6 +37,14 @@ export async function applySchema(sql: Sql): Promise<void> {
   )`
   await sql`CREATE INDEX IF NOT EXISTS idx_sections_roadmap_id ON sections(roadmap_id)`
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_section_id ON tasks(section_id)`
+  await sql`CREATE TABLE IF NOT EXISTS roadmap_events (
+    id          TEXT PRIMARY KEY,
+    roadmap_id  TEXT NOT NULL REFERENCES roadmaps(id) ON DELETE CASCADE,
+    type        TEXT NOT NULL,
+    payload     JSONB NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`
+  await sql`CREATE INDEX IF NOT EXISTS idx_roadmap_events_roadmap_id ON roadmap_events(roadmap_id)`
 }
 
 export async function createSql(url?: string): Promise<Sql> {

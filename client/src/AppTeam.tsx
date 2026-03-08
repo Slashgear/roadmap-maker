@@ -2,6 +2,14 @@ import { useState, useRef, useEffect, useCallback } from 'preact/hooks'
 import { nanoid } from 'nanoid'
 import type { ComponentChildren } from 'preact'
 import type { Roadmap, Section, Task, ModalState } from './types'
+
+type RoadmapEvent = {
+  id: string
+  roadmapId: string
+  type: string
+  payload: Record<string, unknown>
+  createdAt: string
+}
 import { STATUS_COLOR, STATUS_LABEL, TASK_STATUSES, getBarStyle, getDiamondStyle } from './types'
 import { slugify, getSlugFromHash, defaultViewDates } from './lib/utils'
 import { useExport } from './hooks/useExport'
@@ -139,6 +147,8 @@ export default function AppTeam() {
   const [moreOpen, setMoreOpen] = useState(false)
   const { isExporting, handleExport, handleExportPng, handleExportSvg } = useExport(roadmap)
   const [roadmapSearch, setRoadmapSearch] = useState('')
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historyEvents, setHistoryEvents] = useState<RoadmapEvent[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
 
@@ -189,6 +199,13 @@ export default function AppTeam() {
     if (!data) return
     setRoadmap(data)
     window.location.hash = '#' + slug
+  }
+
+  async function openHistory() {
+    if (!roadmap) return
+    const { data } = await api.get<RoadmapEvent[]>(`/roadmaps/${roadmap.slug}/history`)
+    setHistoryEvents(data ?? [])
+    setHistoryOpen(true)
   }
 
   // ── SSE subscription ────────────────────────────────────────────────────────
@@ -558,6 +575,14 @@ export default function AppTeam() {
                         >
                           Settings
                         </DropdownItem>
+                        <DropdownItem
+                          onClick={() => {
+                            setMoreOpen(false)
+                            void openHistory()
+                          }}
+                        >
+                          History
+                        </DropdownItem>
                         <DropdownSeparator />
                         <DropdownItem
                           onClick={() => {
@@ -800,6 +825,8 @@ export default function AppTeam() {
           onClose={() => setModal(null)}
         />
       )}
+
+      {historyOpen && <HistoryPanel events={historyEvents} onClose={() => setHistoryOpen(false)} />}
     </>
   )
 }
@@ -876,6 +903,63 @@ function PresenceAvatars({
             +{overflow}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+const EVENT_LABELS: Record<string, string> = {
+  roadmap_created: 'Roadmap created',
+  roadmap_updated: 'Roadmap updated',
+  roadmap_deleted: 'Roadmap deleted',
+  section_added: 'Section added',
+  section_updated: 'Section updated',
+  section_deleted: 'Section deleted',
+  task_added: 'Task added',
+  task_updated: 'Task updated',
+  task_deleted: 'Task deleted',
+}
+
+function eventDescription(event: RoadmapEvent): string {
+  const label = EVENT_LABELS[event.type] ?? event.type
+  const name =
+    (event.payload.label as string | undefined) ?? (event.payload.title as string | undefined)
+  return name ? `${label}: "${name}"` : label
+}
+
+function HistoryPanel({ events, onClose }: { events: RoadmapEvent[]; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      {/* Backdrop */}
+      <div className="flex-1 bg-black/40" onClick={onClose} aria-hidden="true" />
+      {/* Panel */}
+      <div className="w-full max-w-sm bg-app-surface border-l border-app-border flex flex-col h-full shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-app-border">
+          <h2 className="text-[14px] font-semibold text-white">Modification history</h2>
+          <button
+            onClick={onClose}
+            aria-label="Close history"
+            className="text-gray-400 hover:text-white bg-transparent border-none cursor-pointer text-lg leading-none"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {events.length === 0 ? (
+            <p className="text-gray-500 text-[13px] text-center py-10">No events recorded yet.</p>
+          ) : (
+            <ul className="divide-y divide-app-border">
+              {events.map((ev) => (
+                <li key={ev.id} className="px-5 py-3">
+                  <p className="text-[13px] text-app-text">{eventDescription(ev)}</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    {new Date(ev.createdAt).toLocaleString()}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   )

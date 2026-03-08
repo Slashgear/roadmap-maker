@@ -396,6 +396,73 @@ describe('Tasks', () => {
   })
 })
 
+// ── History ───────────────────────────────────────────────────────────────────
+
+describe('History', () => {
+  let app: Hono
+  let cookie: string
+  let roadmapSlug: string
+
+  beforeEach(async () => {
+    ;({ app } = await createTestApp())
+    cookie = await authenticate(app)
+    const res = await app.request('/api/roadmaps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({
+        title: 'History Test',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+      }),
+    })
+    const roadmap = await res.json()
+    roadmapSlug = roadmap.slug
+  })
+
+  it('GET /api/roadmaps/:slug/history returns 404 for unknown slug', async () => {
+    const res = await app.request('/api/roadmaps/unknown/history', { headers: { Cookie: cookie } })
+    expect(res.status).toBe(404)
+  })
+
+  it('GET /api/roadmaps/:slug/history returns roadmap_created event', async () => {
+    const res = await app.request(`/api/roadmaps/${roadmapSlug}/history`, {
+      headers: { Cookie: cookie },
+    })
+    expect(res.status).toBe(200)
+    const events = await res.json()
+    expect(Array.isArray(events)).toBe(true)
+    expect(events.length).toBeGreaterThanOrEqual(1)
+    const created = events.find((e: { type: string }) => e.type === 'roadmap_created')
+    expect(created).toBeDefined()
+    expect(created.payload.title).toBe('History Test')
+  })
+
+  it('GET /api/roadmaps/:slug/history records section events', async () => {
+    await app.request(`/api/roadmaps/${roadmapSlug}/sections`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ label: 'Backend', color: 'blue' }),
+    })
+
+    const res = await app.request(`/api/roadmaps/${roadmapSlug}/history`, {
+      headers: { Cookie: cookie },
+    })
+    const events = await res.json()
+    const sectionAdded = events.find((e: { type: string }) => e.type === 'section_added')
+    expect(sectionAdded).toBeDefined()
+    expect(sectionAdded.payload.label).toBe('Backend')
+  })
+
+  it('GET /api/roadmaps/:slug/history respects limit query param', async () => {
+    const res = await app.request(`/api/roadmaps/${roadmapSlug}/history?limit=1`, {
+      headers: { Cookie: cookie },
+    })
+    expect(res.status).toBe(200)
+    const events = await res.json()
+    expect(events.length).toBeLessThanOrEqual(1)
+  })
+})
+
 // ── OpenAPI spec ──────────────────────────────────────────────────────────────
 
 describe('OpenAPI', () => {
