@@ -1,7 +1,7 @@
 import type { Sql } from 'postgres'
 import type { Section, SectionColor } from '../../client/src/types'
-import { getTasksBySectionId } from './tasks'
-import type { DbResult } from './tasks'
+import { getTasksBySectionId, rowToTask } from './tasks'
+import type { DbResult, TaskRow } from './tasks'
 
 type SectionRow = {
   id: string
@@ -25,10 +25,32 @@ async function rowToSection(row: SectionRow, sql: Sql): Promise<Section> {
 }
 
 export async function getSectionsByRoadmapId(sql: Sql, roadmapId: string): Promise<Section[]> {
-  const rows = await sql<
+  const sectionRows = await sql<
     SectionRow[]
   >`SELECT * FROM sections WHERE roadmap_id = ${roadmapId} ORDER BY position`
-  return Promise.all(rows.map((r) => rowToSection(r, sql)))
+  if (sectionRows.length === 0) return []
+
+  const sectionIds = sectionRows.map((s) => s.id)
+  const taskRows = await sql<
+    TaskRow[]
+  >`SELECT * FROM tasks WHERE section_id = ANY(${sectionIds}) ORDER BY position`
+
+  const tasksBySection = new Map<string, ReturnType<typeof rowToTask>[]>()
+  for (const row of taskRows) {
+    const list = tasksBySection.get(row.section_id) ?? []
+    list.push(rowToTask(row))
+    tasksBySection.set(row.section_id, list)
+  }
+
+  return sectionRows.map((row) => ({
+    id: row.id,
+    roadmapId: row.roadmap_id,
+    label: row.label,
+    color: row.color as SectionColor,
+    position: row.position,
+    version: row.version,
+    tasks: tasksBySection.get(row.id) ?? [],
+  }))
 }
 
 export async function createSection(

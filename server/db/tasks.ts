@@ -1,7 +1,7 @@
 import type { Sql } from 'postgres'
 import type { Task, TaskStatus, TaskType } from '../../client/src/types'
 
-type TaskRow = {
+export type TaskRow = {
   id: string
   section_id: string
   label: string
@@ -15,7 +15,7 @@ type TaskRow = {
   version: number
 }
 
-function rowToTask(row: TaskRow): Task {
+export function rowToTask(row: TaskRow): Task {
   return {
     id: row.id,
     sectionId: row.section_id,

@@ -19,7 +19,7 @@
 
 ## Performance
 
-- [ ] Corriger le pattern N+1 queries dans `getSectionsByRoadmapId` (1 query par section → remplacer par un JOIN)
+- [x] Corriger le pattern N+1 queries dans `getSectionsByRoadmapId` (1 query par section → `WHERE section_id = ANY($ids)`)
 - [ ] Ajouter de la pagination sur la liste des roadmaps (chargement intégral → risque de freeze avec 100+)
 
 ## Robustesse / UX
