@@ -1,5 +1,27 @@
 # @slashgear/roadmap-maker
 
+## 1.11.0
+
+### Minor Changes
+
+- bea0f88: feat(team): add server-side audit log and history panel
+
+  - New `roadmap_events` table records every create/update/delete on roadmaps, sections, and tasks
+  - New `GET /api/roadmaps/:slug/history` endpoint returns events newest-first (limit up to 200)
+  - "History" entry in the "···" dropdown opens a slide-over panel listing all events with human-readable descriptions and timestamps
+  - 4 new vitest tests covering the history endpoint
+
+### Patch Changes
+
+- 8b02179: Show a conflict notice when a PUT request returns 409 in team mode — instead of silently discarding the update, the modal closes and an amber banner informs the user that their changes conflicted with another edit and the latest version has been loaded.
+- 5a05e0a: Add indexes on `sections.roadmap_id` and `tasks.section_id` to speed up roadmap loading queries (team mode).
+- d37a4cb: Validate `AUTH_TOKEN` and `DATABASE_URL` at startup in postgres mode — server now exits immediately with a clear error listing all missing variables instead of failing later with a cryptic message.
+- ac3c20c: Disable PNG and SVG export buttons while an export is in progress — prevents duplicate exports on repeated clicks and shows "Exporting…" feedback in the dropdown.
+- 0526cad: Fix N+1 query pattern when loading a roadmap — tasks for all sections are now fetched in a single `WHERE section_id = ANY(...)` query instead of one query per section.
+- 6a0f91d: Improve import error message — replace raw Zod validation details with a friendly user-facing message. Technical details are still logged to the browser console for debugging.
+- 15145eb: Add a search input to filter roadmaps by title — appears automatically when there are more than 5 roadmaps, in both static and team modes.
+- 9af73a2: Show a "Connection lost — reconnecting…" banner in team mode when the SSE stream drops. The banner disappears automatically once the connection is restored and the server sends a fresh `init` event.
+
 ## 1.10.1
 
 ### Patch Changes
