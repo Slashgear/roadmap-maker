@@ -1,5 +1,15 @@
 # @slashgear/roadmap-maker
 
+## 1.12.0
+
+### Minor Changes
+
+- 1a4d44c: feat: add section reordering with ↑ ↓ buttons
+
+  - Up/down arrow buttons appear in each section header (no library, zero bundle cost)
+  - Static mode: instant local reorder
+  - Team mode: PUT /api/roadmaps/:slug/sections/reorder syncs order via SSE (sections_reordered event)
+
 ## 1.11.0
 
 ### Minor Changes
