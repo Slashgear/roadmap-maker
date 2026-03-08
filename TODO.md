@@ -24,7 +24,7 @@
 
 ## Robustesse / UX
 
-- [ ] Implémenter la reconnexion automatique du SSE avec backoff exponentiel
+- [x] Feedback visuel quand le SSE se déconnecte — bandeau "reconnecting…" qui disparaît au retour de l'événement `init`
 - [x] Afficher un feedback utilisateur sur les conflits de version 409 (bannière amber + fermeture du modal)
 - [x] Valider les variables d'environnement au démarrage du serveur — `AUTH_TOKEN` et `DATABASE_URL` vérifiés ensemble, message clair avec les vars manquantes
 

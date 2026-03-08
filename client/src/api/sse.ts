@@ -24,9 +24,16 @@ type HandlerMap = {
 export class SSEManager {
   private es: EventSource | null = null
   private handlers: Partial<HandlerMap> = {}
+  private slug: string | null = null
+  private connectOpts: { clientId?: string; name?: string; color?: string } = {}
+
+  onError: (() => void) | null = null
+  onOpen: (() => void) | null = null
 
   connect(slug: string, opts?: { clientId?: string; name?: string; color?: string }) {
     this.disconnect()
+    this.slug = slug
+    this.connectOpts = opts ?? {}
     const params = new URLSearchParams()
     if (opts?.clientId) params.set('clientId', opts.clientId)
     if (opts?.name) params.set('name', opts.name)
@@ -45,6 +52,8 @@ export class SSEManager {
         // ignore malformed events
       }
     })
+    this.es.addEventListener('open', () => this.onOpen?.())
+    this.es.addEventListener('error', () => this.onError?.())
   }
 
   on<T extends SSEEvent['type']>(

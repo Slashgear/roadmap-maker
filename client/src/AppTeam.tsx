@@ -169,6 +169,7 @@ export default function AppTeam() {
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
   const [conflictNotice, setConflictNotice] = useState(false)
+  const [sseConnected, setSseConnected] = useState(true)
   const [moreOpen, setMoreOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -230,10 +231,15 @@ export default function AppTeam() {
 
     const name = localStorage.getItem('presence_name') || 'Anonymous'
     const color = presenceColor(clientId)
+    sseManager.onError = () => setSseConnected(false)
+    sseManager.onOpen = () => setSseConnected(true)
     sseManager.connect(roadmap.slug, { clientId, name, color })
 
     sseManager.on('presence_updated', ({ users }) => setPresenceUsers(users))
-    sseManager.on('init', (r) => setRoadmap(r))
+    sseManager.on('init', (r) => {
+      setRoadmap(r)
+      setSseConnected(true)
+    })
 
     sseManager.on('roadmap_updated', (meta) => {
       setRoadmap((prev) => (prev ? { ...prev, ...meta } : prev))
@@ -767,6 +773,14 @@ export default function AppTeam() {
               onEndChange={setViewEnd}
               onReset={resetView}
             />
+          )}
+
+          {/* SSE reconnecting notice */}
+          {!sseConnected && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3.5 py-2.5 text-[13px] text-yellow-400">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse shrink-0" />
+              Connection lost — reconnecting…
+            </div>
           )}
 
           {/* Conflict notice */}
