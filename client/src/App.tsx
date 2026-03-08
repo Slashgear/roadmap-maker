@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'preact/hooks'
 import { nanoid } from 'nanoid'
 import type { ComponentChildren } from 'preact'
-import type { Roadmap, Section, Task } from './types'
+import type { Roadmap, Section, Task, ModalState } from './types'
 import { STATUS_COLOR, STATUS_LABEL, TASK_STATUSES, getBarStyle, getDiamondStyle } from './types'
+import { slugify, getSlugFromHash, defaultViewDates } from './lib/utils'
+import { useExport } from './hooks/useExport'
+import { DropdownItem, DropdownSeparator } from './components/Dropdown'
 const EXAMPLES: Array<{ slug: string; title: string; subtitle: string | null }> = [
   { slug: 'design-system', title: 'Design System 2.0', subtitle: 'May → Nov 2026' },
   { slug: 'saas-launch', title: 'SaaS Launch', subtitle: 'Mar → Aug 2026' },
@@ -26,15 +29,6 @@ import RoadmapModal from './components/RoadmapModal'
 import ViewRangeControls from './components/ViewRangeControls'
 import { getSharedParam, decodeSharedRoadmap, buildShareUrl } from './shareUrl'
 
-type ModalState =
-  | { type: 'create-roadmap' }
-  | { type: 'edit-roadmap' }
-  | { type: 'add-section' }
-  | { type: 'edit-section'; section: Section }
-  | { type: 'add-task'; sectionId: string }
-  | { type: 'edit-task'; task: Task }
-  | null
-
 const STORAGE_KEY = 'roadmap-maker:roadmaps'
 
 function load(): Roadmap[] {
@@ -49,30 +43,6 @@ function load(): Roadmap[] {
 
 function save(roadmaps: Roadmap[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(roadmaps))
-}
-
-function slugify(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
-function getSlugFromHash(): string | null {
-  return window.location.hash.slice(1) || null
-}
-
-function localISO(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function defaultViewDates() {
-  const today = new Date()
-  const start = new Date(today)
-  start.setDate(start.getDate() - 30)
-  const end = new Date(today)
-  end.setMonth(end.getMonth() + 4)
-  return { start: localISO(start), end: localISO(end) }
 }
 
 export default function App() {
@@ -102,7 +72,7 @@ export default function App() {
   const [importError, setImportError] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
   const [copyDone, setCopyDone] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
+  const { isExporting, handleExport, handleExportPng, handleExportSvg } = useExport(roadmap)
   const [roadmapSearch, setRoadmapSearch] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
@@ -415,78 +385,6 @@ export default function App() {
     const imported = result.data as Roadmap
     const without = roadmaps.filter((r) => r.slug !== imported.slug)
     updateRoadmaps([...without, imported], imported)
-  }
-
-  function handleExport() {
-    if (!roadmap) return
-    const blob = new Blob([JSON.stringify(roadmap, null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `${roadmap.slug}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
-
-  async function captureChart() {
-    const outer = document.getElementById('main-chart')?.firstElementChild as HTMLElement | null
-    if (!outer) return null
-    const scrollDiv = outer.querySelector<HTMLElement>(':scope > div')
-    const prevOuter = outer.style.overflow
-    const prevScroll = scrollDiv?.style.overflow ?? ''
-    outer.style.overflow = 'visible'
-    if (scrollDiv) scrollDiv.style.overflow = 'visible'
-    return {
-      outer,
-      scrollDiv,
-      w: outer.scrollWidth,
-      h: outer.scrollHeight,
-      restore() {
-        outer.style.overflow = prevOuter
-        if (scrollDiv) scrollDiv.style.overflow = prevScroll
-      },
-    }
-  }
-
-  async function handleExportPng() {
-    if (!roadmap || isExporting) return
-    setIsExporting(true)
-    const capture = await captureChart()
-    if (!capture) {
-      setIsExporting(false)
-      return
-    }
-    try {
-      const { toPng } = await import('html-to-image')
-      const url = await toPng(capture.outer, { pixelRatio: 2, width: capture.w, height: capture.h })
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${roadmap.slug}-gantt.png`
-      a.click()
-    } finally {
-      capture.restore()
-      setIsExporting(false)
-    }
-  }
-
-  async function handleExportSvg() {
-    if (!roadmap || isExporting) return
-    setIsExporting(true)
-    const capture = await captureChart()
-    if (!capture) {
-      setIsExporting(false)
-      return
-    }
-    try {
-      const { toSvg } = await import('html-to-image')
-      const url = await toSvg(capture.outer, { width: capture.w, height: capture.h })
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${roadmap.slug}-gantt.svg`
-      a.click()
-    } finally {
-      capture.restore()
-      setIsExporting(false)
-    }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -876,31 +774,6 @@ function Btn({
       {children}
     </button>
   )
-}
-
-function DropdownItem({
-  children,
-  onClick,
-  disabled = false,
-}: {
-  children: ComponentChildren
-  onClick: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      role="menuitem"
-      onClick={onClick}
-      disabled={disabled}
-      className="w-full text-left px-4 py-2.5 text-[13px] text-app-text hover:bg-white/5 cursor-pointer bg-transparent flex flex-col focus-visible:outline-none focus-visible:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
-    >
-      {children}
-    </button>
-  )
-}
-
-function DropdownSeparator() {
-  return <div role="separator" className="h-px bg-app-border my-1 mx-2" />
 }
 
 function EmptyState({

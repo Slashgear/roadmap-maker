@@ -35,5 +35,5 @@
 
 ## Code quality
 
-- [ ] Extraire les helpers communs d'`App.tsx` et `AppTeam.tsx` vers `/client/src/lib/` (slugify, localISO, états des modals…)
+- [x] Extraire les helpers communs d'`App.tsx` et `AppTeam.tsx` vers `/client/src/lib/` (slugify, localISO, états des modals…)
 - [ ] Rendre les sessions persistantes (actuellement `Map<sessionId, Date>` en mémoire, perdu au redémarrage)

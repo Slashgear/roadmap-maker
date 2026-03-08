@@ -60,6 +60,15 @@ export interface Roadmap {
   version?: number
 }
 
+export type ModalState =
+  | { type: 'create-roadmap' }
+  | { type: 'edit-roadmap' }
+  | { type: 'add-section' }
+  | { type: 'edit-section'; section: Section }
+  | { type: 'add-task'; sectionId: string }
+  | { type: 'edit-task'; task: Task }
+  | null
+
 export const COLOR_HEX: Record<SectionColor, string> = {
   orange: '#f97316',
   purple: '#8b5cf6',
