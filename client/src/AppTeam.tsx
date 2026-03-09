@@ -409,6 +409,16 @@ export default function AppTeam() {
     if (status === 409) setConflictNotice(true)
   }
 
+  async function handleMoveTask(task: Task, updates: { startDate: string; endDate: string }) {
+    if (!roadmap) return
+    const { status } = await api.put(
+      `/roadmaps/${roadmap.slug}/sections/${task.sectionId}/tasks/${task.id}`,
+      { ...task, ...updates, version: task.version ?? 1 },
+    )
+    if (status === 409) setConflictNotice(true)
+    // SSE task_updated event updates state
+  }
+
   async function handleDeleteTask(task: Task) {
     if (!roadmap) return
     await api.delete(`/roadmaps/${roadmap.slug}/sections/${task.sectionId}/tasks/${task.id}`)
@@ -772,6 +782,7 @@ export default function AppTeam() {
                 onEditSection={(section) => setModal({ type: 'edit-section', section })}
                 onAddTask={(sectionId) => setModal({ type: 'add-task', sectionId })}
                 onEditTask={(task) => setModal({ type: 'edit-task', task })}
+                onUpdateTask={handleMoveTask}
                 onMoveSection={handleMoveSection}
               />
             ) : (

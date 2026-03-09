@@ -357,6 +357,20 @@ export default function App() {
     setModal(null)
   }
 
+  function handleMoveTask(task: Task, updates: { startDate: string; endDate: string }) {
+    if (!roadmap) return
+    const updatedTask: Task = { ...task, ...updates }
+    const updated: Roadmap = {
+      ...roadmap,
+      sections: roadmap.sections.map((s) =>
+        s.id === task.sectionId
+          ? { ...s, tasks: sortedByStartDate(s.tasks.map((t) => (t.id === task.id ? updatedTask : t))) }
+          : s,
+      ),
+    }
+    updateRoadmaps(roadmaps.map((r) => (r.id === roadmap.id ? updated : r)), updated)
+  }
+
   function handleDeleteTask(task: Task) {
     if (!roadmap) return
     const updated: Roadmap = {
@@ -687,6 +701,7 @@ export default function App() {
                 onEditSection={(section) => setModal({ type: 'edit-section', section })}
                 onAddTask={(sectionId) => setModal({ type: 'add-task', sectionId })}
                 onEditTask={(task) => setModal({ type: 'edit-task', task })}
+                onUpdateTask={handleMoveTask}
                 onMoveSection={handleMoveSection}
               />
             ) : (
