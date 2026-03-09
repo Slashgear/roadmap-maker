@@ -755,7 +755,6 @@ export default function App() {
       {modal?.type === 'add-task' && roadmap && (
         <TaskModal
           sectionId={modal.sectionId}
-          roadmap={roadmap}
           onSave={(data) => handleAddTask(modal.sectionId, data)}
           onClose={() => setModal(null)}
         />
@@ -765,7 +764,6 @@ export default function App() {
         <TaskModal
           task={modal.task}
           sectionId={modal.task.sectionId}
-          roadmap={roadmap}
           onSave={(data) => handleUpdateTask(modal.task, data)}
           onDelete={() => handleDeleteTask(modal.task)}
           onClose={() => setModal(null)}

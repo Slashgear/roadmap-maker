@@ -842,7 +842,6 @@ export default function AppTeam() {
       {modal?.type === 'add-task' && roadmap && (
         <TaskModal
           sectionId={modal.sectionId}
-          roadmap={roadmap}
           onSave={(data) => void handleAddTask(modal.sectionId, data)}
           onClose={() => setModal(null)}
         />
@@ -852,7 +851,6 @@ export default function AppTeam() {
         <TaskModal
           task={modal.task}
           sectionId={modal.task.sectionId}
-          roadmap={roadmap}
           onSave={(data) => void handleUpdateTask(modal.task, data)}
           onDelete={() => void handleDeleteTask(modal.task)}
           onClose={() => setModal(null)}

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import Modal, { FormField, ModalActions } from './Modal'
-import type { Task, Roadmap, TaskStatus } from '../types'
+import type { Task, TaskStatus } from '../types'
 import { TASK_STATUSES, STATUS_COLOR, STATUS_LABEL } from '../types'
 
 function localISO(offsetDays = 0): string {
@@ -12,7 +12,6 @@ function localISO(offsetDays = 0): string {
 interface Props {
   task?: Task | null
   sectionId: string
-  roadmap: Roadmap
   onSave: (data: Omit<Task, 'id' | 'sectionId' | 'position'>) => void
   onDelete?: () => void
   onClose: () => void
@@ -21,7 +20,6 @@ interface Props {
 export default function TaskModal({
   task,
   sectionId: _sectionId,
-  roadmap,
   onSave,
   onDelete,
   onClose,
@@ -75,8 +73,6 @@ export default function TaskModal({
             <input
               type="date"
               value={startDate}
-              min={roadmap.startDate}
-              max={roadmap.endDate}
               onChange={(e) => setStartDate(e.currentTarget.value)}
             />
           </FormField>
@@ -85,7 +81,6 @@ export default function TaskModal({
               type="date"
               value={endDate}
               min={startDate}
-              max={roadmap.endDate}
               onChange={(e) => setEndDate(e.currentTarget.value)}
             />
           </FormField>
