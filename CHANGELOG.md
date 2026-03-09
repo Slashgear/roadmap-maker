@@ -1,5 +1,19 @@
 # @slashgear/roadmap-maker
 
+## 1.13.0
+
+### Minor Changes
+
+- e252618: Add drag-to-move and resize interactions on Gantt task bars. Tasks can now be dragged horizontally to shift their dates, or resized via a right-edge handle to adjust the end date. Task dates are also no longer constrained to the roadmap's date range.
+
+### Patch Changes
+
+- 5b264cd: Add empty state placeholders in the Gantt chart.
+
+  When a roadmap has no sections, a centered "Add your first section" button appears in the chart area. When a section has no tasks, a "Add your first task" button replaces the subtle row at the bottom of the section.
+
+- 5bbfdb0: Fix focus management when reordering sections. After clicking ↑ or ↓, focus now follows the moved section to its new position instead of staying on the original DOM node.
+
 ## 1.12.0
 
 ### Minor Changes
