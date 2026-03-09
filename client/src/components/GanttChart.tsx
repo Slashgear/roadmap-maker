@@ -422,8 +422,18 @@ export default function GanttChart({
                   {onMoveSection && (
                     <div className="flex flex-col shrink-0 mr-1">
                       <button
-                        onClick={() => onMoveSection(section.id, 'up')}
+                        onClick={() => {
+                          onMoveSection(section.id, 'up')
+                          requestAnimationFrame(() => {
+                            document
+                              .querySelector<HTMLButtonElement>(
+                                `[data-section-move="${section.id}-up"]`,
+                              )
+                              ?.focus()
+                          })
+                        }}
                         disabled={isFirst}
+                        data-section-move={`${section.id}-up`}
                         aria-label={`Move section ${section.label} up`}
                         className="flex items-center justify-center w-5 h-4 bg-transparent border-none text-gray-500 hover:text-white disabled:opacity-20 disabled:cursor-default cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 rounded-sm"
                       >
@@ -432,8 +442,18 @@ export default function GanttChart({
                         </svg>
                       </button>
                       <button
-                        onClick={() => onMoveSection(section.id, 'down')}
+                        onClick={() => {
+                          onMoveSection(section.id, 'down')
+                          requestAnimationFrame(() => {
+                            document
+                              .querySelector<HTMLButtonElement>(
+                                `[data-section-move="${section.id}-down"]`,
+                              )
+                              ?.focus()
+                          })
+                        }}
                         disabled={isLast}
+                        data-section-move={`${section.id}-down`}
                         aria-label={`Move section ${section.label} down`}
                         className="flex items-center justify-center w-5 h-4 bg-transparent border-none text-gray-500 hover:text-white disabled:opacity-20 disabled:cursor-default cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 rounded-sm"
                       >
