@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'preact/hooks'
+import { useMemo, useState, useEffect, useRef } from 'preact/hooks'
 import type { Roadmap, Section, Task } from '../types'
 import {
   COLOR_HEX,
@@ -32,6 +32,7 @@ interface Props {
   onEditSection: (section: Section) => void
   onAddTask: (sectionId: string) => void
   onEditTask: (task: Task) => void
+  onUpdateTask?: (task: Task, updates: { startDate: string; endDate: string }) => void
   onMoveSection?: (sectionId: string, direction: 'up' | 'down') => void
 }
 
@@ -73,6 +74,12 @@ function TimelineOverlay({ weekGrids, todayPct }: { weekGrids: number[]; todayPc
 // Shared sticky class for all left-column cells
 const STICKY = 'sticky left-0 z-10'
 
+function msToDate(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10)
+}
+
+type DragPreview = { taskId: string; startMs: number; endMs: number }
+
 export default function GanttChart({
   roadmap,
   viewStart,
@@ -80,6 +87,7 @@ export default function GanttChart({
   onEditSection,
   onAddTask,
   onEditTask,
+  onUpdateTask,
   onMoveSection,
 }: Props) {
   const isMobile = useIsMobile()
@@ -140,6 +148,118 @@ export default function GanttChart({
     return result
   }, [start, end])
 
+  // ── Drag & Resize ──────────────────────────────────────────────────────────
+  const [preview, setPreview] = useState<DragPreview | null>(null)
+  const dragRef = useRef<{
+    type: 'move' | 'resize'
+    task: Task
+    startX: number
+    origStartMs: number
+    origEndMs: number
+    didMove: boolean
+  } | null>(null)
+  const previewRef = useRef<DragPreview | null>(null)
+  const chartColRef = useRef<HTMLDivElement>(null)
+  const totalMsRef = useRef(totalMs)
+  const onUpdateTaskRef = useRef(onUpdateTask)
+  const lastDragDidMoveRef = useRef(false)
+
+  useEffect(() => {
+    totalMsRef.current = totalMs
+  }, [totalMs])
+  useEffect(() => {
+    onUpdateTaskRef.current = onUpdateTask
+  }, [onUpdateTask])
+
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      if (!dragRef.current || !chartColRef.current) return
+      const dr = dragRef.current
+      const rect = chartColRef.current.getBoundingClientRect()
+      const deltaX = e.clientX - dr.startX
+      if (Math.abs(deltaX) > 3) {
+        if (!dr.didMove) {
+          dr.didMove = true
+          document.body.style.cursor = dr.type === 'move' ? 'grabbing' : 'ew-resize'
+          document.body.style.userSelect = 'none'
+        }
+      }
+      if (!dr.didMove) return
+
+      const deltaPct = deltaX / rect.width
+      const rawDeltaMs = deltaPct * totalMsRef.current
+      const deltaMs = Math.round(rawDeltaMs / 86400000) * 86400000
+
+      let newStartMs = dr.origStartMs
+      let newEndMs = dr.origEndMs
+
+      if (dr.type === 'move') {
+        newStartMs = dr.origStartMs + deltaMs
+        newEndMs = dr.origEndMs + deltaMs
+      } else {
+        newEndMs = Math.max(dr.origEndMs + deltaMs, dr.origStartMs + 86400000)
+      }
+
+      const p: DragPreview = { taskId: dr.task.id, startMs: newStartMs, endMs: newEndMs }
+      previewRef.current = p
+      setPreview(p)
+    }
+
+    function onMouseUp() {
+      if (!dragRef.current) return
+      const dr = dragRef.current
+      dragRef.current = null
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+
+      lastDragDidMoveRef.current = dr.didMove
+      if (dr.didMove && previewRef.current && onUpdateTaskRef.current) {
+        onUpdateTaskRef.current(dr.task, {
+          startDate: msToDate(previewRef.current.startMs),
+          endDate: msToDate(previewRef.current.endMs),
+        })
+      }
+      previewRef.current = null
+      setPreview(null)
+    }
+
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
+
+  function handleBarMouseDown(e: MouseEvent, task: Task) {
+    if (!onUpdateTask || isMobile) return
+    // Only left button
+    if (e.button !== 0) return
+    e.stopPropagation()
+    dragRef.current = {
+      type: 'move',
+      task,
+      startX: e.clientX,
+      origStartMs: new Date(task.startDate).getTime(),
+      origEndMs: new Date(task.endDate).getTime(),
+      didMove: false,
+    }
+  }
+
+  function handleResizeMouseDown(e: MouseEvent, task: Task) {
+    if (!onUpdateTask || isMobile) return
+    if (e.button !== 0) return
+    e.stopPropagation()
+    dragRef.current = {
+      type: 'resize',
+      task,
+      startX: e.clientX,
+      origStartMs: new Date(task.startDate).getTime(),
+      origEndMs: new Date(task.endDate).getTime(),
+      didMove: false,
+    }
+  }
+
   return (
     // Clip wrapper: border-radius + overflow:hidden clips inner content to rounded corners
     <div className="overflow-hidden border border-app-border rounded-xl bg-app-surface">
@@ -161,6 +281,7 @@ export default function GanttChart({
             Task
           </div>
           <div
+            ref={chartColRef}
             className="sticky top-0 z-20 overflow-hidden border-b border-app-border bg-app-surface"
             style={{ height: HEADER_H }}
           >
@@ -313,8 +434,13 @@ export default function GanttChart({
                 {/* Task rows */}
                 {!isCollapsed &&
                   section.tasks.map((task) => {
-                    const taskStart = new Date(task.startDate)
-                    const taskEnd = new Date(task.endDate)
+                    const isPreview = preview?.taskId === task.id
+                    const taskStartMs = isPreview
+                      ? preview!.startMs
+                      : new Date(task.startDate).getTime()
+                    const taskEndMs = isPreview ? preview!.endMs : new Date(task.endDate).getTime()
+                    const taskStart = new Date(taskStartMs)
+                    const taskEnd = new Date(taskEndMs)
                     const left = pct(taskStart)
                     const width = Math.max(pct(taskEnd) - left, 0.8)
                     const color = STATUS_COLOR[task.status]
@@ -328,6 +454,8 @@ export default function GanttChart({
                       color,
                     )
 
+                    const canDrag = !!onUpdateTask && !isMobile
+
                     return (
                       <>
                         <button
@@ -337,7 +465,7 @@ export default function GanttChart({
                           aria-label={[
                             task.label,
                             STATUS_LABEL[task.type][task.status],
-                            `${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}`,
+                            `${new Date(task.startDate).toLocaleDateString('en-US')} → ${new Date(task.endDate).toLocaleDateString('en-US')}`,
                             task.note ? `Note: ${task.note}` : null,
                             task.externalLink ? `Link: ${task.externalLink}` : null,
                           ]
@@ -381,12 +509,18 @@ export default function GanttChart({
                           )}
                         </button>
                         <div
-                          className="relative overflow-hidden border-b border-app-border cursor-pointer"
+                          className="relative overflow-hidden border-b border-app-border"
                           style={{
                             height: ROW_H,
                             background: SECTION_BG[section.color] ?? 'transparent',
                           }}
-                          onClick={() => onEditTask(task)}
+                          onClick={() => {
+                            if (lastDragDidMoveRef.current) {
+                              lastDragDidMoveRef.current = false
+                              return
+                            }
+                            onEditTask(task)
+                          }}
                           aria-hidden="true"
                         >
                           <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
@@ -400,8 +534,13 @@ export default function GanttChart({
                                 left: `calc(${left}% - 7px)`,
                                 background: diamondBg,
                                 border: diamondBorder,
+                                cursor: canDrag ? 'grab' : 'pointer',
+                                opacity: isPreview ? 0.75 : 1,
                               }}
                               title={task.label}
+                              onMouseDown={(e) =>
+                                handleBarMouseDown(e as unknown as MouseEvent, task)
+                              }
                             />
                           ) : (
                             <div
@@ -414,6 +553,8 @@ export default function GanttChart({
                                 border: barBorder,
                                 color: barColor,
                                 fontFamily: 'DM Mono, monospace',
+                                cursor: canDrag ? 'grab' : 'pointer',
+                                opacity: isPreview ? 0.75 : 1,
                                 ...(task.note
                                   ? {
                                       outline: '2px dashed rgba(255,255,255,0.35)',
@@ -422,7 +563,28 @@ export default function GanttChart({
                                   : {}),
                               }}
                               title={`${task.label}\n${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}${task.note ? '\n\n📝 ' + task.note : ''}`}
-                            />
+                              onMouseDown={(e) =>
+                                handleBarMouseDown(e as unknown as MouseEvent, task)
+                              }
+                            >
+                              {canDrag && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    right: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    width: 8,
+                                    cursor: 'ew-resize',
+                                    zIndex: 10,
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation()
+                                    handleResizeMouseDown(e as unknown as MouseEvent, task)
+                                  }}
+                                />
+                              )}
+                            </div>
                           )}
                         </div>
                       </>
