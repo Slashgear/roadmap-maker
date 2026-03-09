@@ -705,6 +705,7 @@ export default function App() {
                 viewStart={viewStart}
                 viewEnd={viewEnd}
                 onEditSection={(section) => setModal({ type: 'edit-section', section })}
+                onAddSection={() => setModal({ type: 'add-section' })}
                 onAddTask={(sectionId) => setModal({ type: 'add-task', sectionId })}
                 onEditTask={(task) => setModal({ type: 'edit-task', task })}
                 onUpdateTask={handleMoveTask}

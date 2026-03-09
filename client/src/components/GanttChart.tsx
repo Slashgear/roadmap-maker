@@ -30,6 +30,7 @@ interface Props {
   viewStart: string
   viewEnd: string
   onEditSection: (section: Section) => void
+  onAddSection?: () => void
   onAddTask: (sectionId: string) => void
   onEditTask: (task: Task) => void
   onUpdateTask?: (task: Task, updates: { startDate: string; endDate: string }) => void
@@ -85,6 +86,7 @@ export default function GanttChart({
   viewStart,
   viewEnd,
   onEditSection,
+  onAddSection,
   onAddTask,
   onEditTask,
   onUpdateTask,
@@ -333,6 +335,28 @@ export default function GanttChart({
           </div>
 
           {/* ── Sections ── */}
+          {/* ── Empty chart placeholder ── */}
+          {roadmap.sections.length === 0 && onAddSection && (
+            <>
+              <div
+                className={`${STICKY} border-r border-app-border bg-app-surface`}
+                style={{ height: 80 }}
+              />
+              <div className="relative border-app-border" style={{ height: 80 }}>
+                <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button
+                    onClick={onAddSection}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-gray-600 text-gray-400 text-[13px] hover:border-violet-500 hover:text-violet-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                  >
+                    <span className="text-base leading-none">+</span>
+                    Add your first section
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
           {roadmap.sections.map((section, index) => {
             const isCollapsed = collapsed.has(section.id)
             const isFirst = index === 0
@@ -592,7 +616,7 @@ export default function GanttChart({
                   })}
 
                 {/* Add task row */}
-                {!isCollapsed && (
+                {!isCollapsed && section.tasks.length > 0 && (
                   <>
                     <div
                       className={`${STICKY} flex items-center px-3.5 bg-app-surface border-r border-b border-app-border`}
@@ -612,6 +636,32 @@ export default function GanttChart({
                       aria-hidden="true"
                     >
                       <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
+                    </div>
+                  </>
+                )}
+
+                {/* Empty section placeholder */}
+                {!isCollapsed && section.tasks.length === 0 && (
+                  <>
+                    <div
+                      className={`${STICKY} flex items-center px-3.5 bg-app-surface border-r border-b border-app-border`}
+                      style={{ height: 64 }}
+                    />
+                    <div
+                      className="relative overflow-hidden border-b border-app-border"
+                      style={{ height: 64, background: SECTION_BG[section.color] ?? 'transparent' }}
+                    >
+                      <TimelineOverlay weekGrids={weekGrids} todayPct={todayPct} />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <button
+                          onClick={() => onAddTask(section.id)}
+                          aria-label={`Add task to ${section.label}`}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-gray-600 text-gray-400 text-[13px] hover:border-violet-500 hover:text-violet-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        >
+                          <span className="text-base leading-none">+</span>
+                          Add your first task
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
