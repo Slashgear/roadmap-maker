@@ -438,9 +438,7 @@ export default function GanttChart({
                     const taskStartMs = isPreview
                       ? preview!.startMs
                       : new Date(task.startDate).getTime()
-                    const taskEndMs = isPreview
-                      ? preview!.endMs
-                      : new Date(task.endDate).getTime()
+                    const taskEndMs = isPreview ? preview!.endMs : new Date(task.endDate).getTime()
                     const taskStart = new Date(taskStartMs)
                     const taskEnd = new Date(taskEndMs)
                     const left = pct(taskStart)
@@ -540,7 +538,9 @@ export default function GanttChart({
                                 opacity: isPreview ? 0.75 : 1,
                               }}
                               title={task.label}
-                              onMouseDown={(e) => handleBarMouseDown(e as unknown as MouseEvent, task)}
+                              onMouseDown={(e) =>
+                                handleBarMouseDown(e as unknown as MouseEvent, task)
+                              }
                             />
                           ) : (
                             <div
@@ -563,7 +563,9 @@ export default function GanttChart({
                                   : {}),
                               }}
                               title={`${task.label}\n${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}${task.note ? '\n\n📝 ' + task.note : ''}`}
-                              onMouseDown={(e) => handleBarMouseDown(e as unknown as MouseEvent, task)}
+                              onMouseDown={(e) =>
+                                handleBarMouseDown(e as unknown as MouseEvent, task)
+                              }
                             >
                               {canDrag && (
                                 <div
