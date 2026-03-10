@@ -1,5 +1,14 @@
 # @slashgear/roadmap-maker
 
+## 1.13.1
+
+### Patch Changes
+
+- 1275d5f: fix: move Gantt resize handle outside bar div to prevent 1px move-drag misfire on border
+- b53bd49: fix: show loading state in team mode while roadmap data is fetched instead of empty state
+- b53bd49: fix: prevent modal text inputs from clearing during SSE re-renders by switching to uncontrolled inputs
+- b53bd49: fix: debounce SSE disconnection banner to avoid false positives on transient reconnects
+
 ## 1.13.0
 
 ### Minor Changes
