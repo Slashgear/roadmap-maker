@@ -587,38 +587,39 @@ export default function GanttChart({
                               }
                             />
                           ) : (
-                            <div
-                              className="hover:brightness-125 transition-[filter] duration-150 absolute top-1/2 -translate-y-1/2 rounded-[4px] flex items-center px-2 text-[10.5px] font-medium whitespace-nowrap overflow-hidden z-[5]"
-                              style={{
-                                height: 20,
-                                left: `${left}%`,
-                                width: `${width}%`,
-                                background: barBg,
-                                border: barBorder,
-                                color: barColor,
-                                fontFamily: 'DM Mono, monospace',
-                                cursor: canDrag ? 'grab' : 'pointer',
-                                opacity: isPreview ? 0.75 : 1,
-                                ...(task.note
-                                  ? {
-                                      outline: '2px dashed rgba(255,255,255,0.35)',
-                                      outlineOffset: -2,
-                                    }
-                                  : {}),
-                              }}
-                              title={`${task.label}\n${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}${task.note ? '\n\n📝 ' + task.note : ''}`}
-                              onMouseDown={(e) =>
-                                handleBarMouseDown(e as unknown as MouseEvent, task)
-                              }
-                            >
+                            <>
+                              <div
+                                className="hover:brightness-125 transition-[filter] duration-150 absolute top-1/2 -translate-y-1/2 rounded-[4px] flex items-center px-2 text-[10.5px] font-medium whitespace-nowrap overflow-hidden z-[5]"
+                                style={{
+                                  height: 20,
+                                  left: `${left}%`,
+                                  width: `${width}%`,
+                                  background: barBg,
+                                  border: barBorder,
+                                  color: barColor,
+                                  fontFamily: 'DM Mono, monospace',
+                                  cursor: canDrag ? 'grab' : 'pointer',
+                                  opacity: isPreview ? 0.75 : 1,
+                                  ...(task.note
+                                    ? {
+                                        outline: '2px dashed rgba(255,255,255,0.35)',
+                                        outlineOffset: -2,
+                                      }
+                                    : {}),
+                                }}
+                                title={`${task.label}\n${taskStart.toLocaleDateString('en-US')} → ${taskEnd.toLocaleDateString('en-US')}${task.note ? '\n\n📝 ' + task.note : ''}`}
+                                onMouseDown={(e) =>
+                                  handleBarMouseDown(e as unknown as MouseEvent, task)
+                                }
+                              />
                               {canDrag && (
                                 <div
                                   style={{
                                     position: 'absolute',
-                                    right: 0,
+                                    left: `calc(${left}% + ${width}% - 8px)`,
                                     top: 0,
                                     bottom: 0,
-                                    width: 8,
+                                    width: 10,
                                     cursor: 'ew-resize',
                                     zIndex: 10,
                                   }}
@@ -628,7 +629,7 @@ export default function GanttChart({
                                   }}
                                 />
                               )}
-                            </div>
+                            </>
                           )}
                         </div>
                       </>
