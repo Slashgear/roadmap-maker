@@ -57,8 +57,8 @@ export default function RoadmapModal({ roadmap, onSave, onDelete, onClose }: Pro
         <FormField label="Title">
           <input
             type="text"
-            value={title}
-            onChange={(e) => {
+            defaultValue={title}
+            onInput={(e) => {
               setTitle(e.currentTarget.value)
               if (!roadmap) setSlug(autoSlug(e.currentTarget.value))
             }}
@@ -70,8 +70,8 @@ export default function RoadmapModal({ roadmap, onSave, onDelete, onClose }: Pro
         <FormField label="Subtitle (optional)">
           <input
             type="text"
-            value={subtitle}
-            onChange={(e) => setSubtitle(e.currentTarget.value)}
+            defaultValue={subtitle}
+            onInput={(e) => setSubtitle(e.currentTarget.value)}
             placeholder="Ex: February → June 2026"
           />
         </FormField>

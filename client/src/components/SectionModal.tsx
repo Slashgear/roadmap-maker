@@ -34,8 +34,8 @@ export default function SectionModal({ section, onSave, onDelete, onClose }: Pro
         <FormField label="Name">
           <input
             type="text"
-            value={label}
-            onChange={(e) => setLabel(e.currentTarget.value)}
+            defaultValue={label}
+            onInput={(e) => setLabel(e.currentTarget.value)}
             placeholder="Ex: 🎨 Design"
             autoFocus
           />

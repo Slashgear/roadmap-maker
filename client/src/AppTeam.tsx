@@ -143,6 +143,7 @@ export default function AppTeam() {
   const [viewEnd, setViewEnd] = useState(() => defaultViewDates().end)
   const [importError, setImportError] = useState('')
   const [conflictNotice, setConflictNotice] = useState(false)
+  const [loadingData, setLoadingData] = useState(false)
   const [sseConnected, setSseConnected] = useState(true)
   const [moreOpen, setMoreOpen] = useState(false)
   const { isExporting, handleExport, handleExportPng, handleExportSvg } = useExport(roadmap)
@@ -151,6 +152,7 @@ export default function AppTeam() {
   const [historyEvents, setHistoryEvents] = useState<RoadmapEvent[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
+  const sseErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!moreOpen) return
@@ -179,15 +181,20 @@ export default function AppTeam() {
   // ── Load roadmap list after auth ────────────────────────────────────────────
 
   const loadRoadmapList = useCallback(async () => {
+    setLoadingData(true)
     const { data } = await api.get<Omit<Roadmap, 'sections'>[]>('/roadmaps')
-    if (!data) return
+    if (!data) {
+      setLoadingData(false)
+      return
+    }
     setRoadmaps(data)
     // Auto-select from hash or first
     const slug = getSlugFromHash()
     const target = slug ? data.find((r) => r.slug === slug) : data[0]
     if (target && (!roadmap || roadmap.slug !== target.slug)) {
-      loadRoadmap(target.slug)
+      await loadRoadmap(target.slug)
     }
+    setLoadingData(false)
   }, []) // eslint-disable-line
 
   useEffect(() => {
@@ -215,8 +222,20 @@ export default function AppTeam() {
 
     const name = localStorage.getItem('presence_name') || 'Anonymous'
     const color = presenceColor(clientId)
-    sseManager.onError = () => setSseConnected(false)
-    sseManager.onOpen = () => setSseConnected(true)
+    sseManager.onError = () => {
+      if (sseErrorTimerRef.current) return
+      sseErrorTimerRef.current = setTimeout(() => {
+        setSseConnected(false)
+        sseErrorTimerRef.current = null
+      }, 5000)
+    }
+    sseManager.onOpen = () => {
+      if (sseErrorTimerRef.current) {
+        clearTimeout(sseErrorTimerRef.current)
+        sseErrorTimerRef.current = null
+      }
+      setSseConnected(true)
+    }
     sseManager.connect(roadmap.slug, { clientId, name, color })
 
     sseManager.on('presence_updated', ({ users }) => setPresenceUsers(users))
@@ -306,6 +325,10 @@ export default function AppTeam() {
     return () => {
       sseManager.disconnect()
       setPresenceUsers([])
+      if (sseErrorTimerRef.current) {
+        clearTimeout(sseErrorTimerRef.current)
+        sseErrorTimerRef.current = null
+      }
     }
   }, [roadmap?.slug]) // reconnect only when slug changes
 
@@ -773,7 +796,7 @@ export default function AppTeam() {
           </div>
 
           {/* Chart */}
-          <div id="main-chart">
+          <div id="main-chart" aria-busy={loadingData} aria-live="polite" aria-atomic="false">
             {roadmap ? (
               <GanttChart
                 roadmap={roadmap}
@@ -786,6 +809,13 @@ export default function AppTeam() {
                 onUpdateTask={handleMoveTask}
                 onMoveSection={handleMoveSection}
               />
+            ) : loadingData ? (
+              <div
+                role="status"
+                className="flex items-center justify-center py-24 text-gray-500 text-sm"
+              >
+                Loading…
+              </div>
             ) : (
               <TeamEmptyState onCreateRoadmap={() => setModal({ type: 'create-roadmap' })} />
             )}

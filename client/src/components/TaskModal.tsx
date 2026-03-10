@@ -60,8 +60,8 @@ export default function TaskModal({
         <FormField label="Name">
           <input
             type="text"
-            value={label}
-            onChange={(e) => setLabel(e.currentTarget.value)}
+            defaultValue={label}
+            onInput={(e) => setLabel(e.currentTarget.value)}
             placeholder="Ex: Navigation — Integration"
             required
             autoFocus
@@ -185,8 +185,8 @@ export default function TaskModal({
             <input
               id="f-external-link"
               type="url"
-              value={externalLink}
-              onChange={(e) => setExternalLink(e.currentTarget.value)}
+              defaultValue={externalLink}
+              onInput={(e) => setExternalLink(e.currentTarget.value)}
               placeholder="https://…"
               style={{ paddingLeft: 34 }}
             />
@@ -195,8 +195,8 @@ export default function TaskModal({
 
         <FormField label="Note (optional)">
           <textarea
-            value={note}
-            onChange={(e) => setNote(e.currentTarget.value)}
+            defaultValue={note}
+            onInput={(e) => setNote(e.currentTarget.value)}
             placeholder="Context, decisions, links…"
           />
         </FormField>
