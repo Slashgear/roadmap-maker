@@ -201,10 +201,20 @@ export default function AppTeam() {
     if (authenticated) void loadRoadmapList()
   }, [authenticated])
 
+  function sortRoadmapTasks(r: Roadmap): Roadmap {
+    return {
+      ...r,
+      sections: r.sections.map((s) => ({
+        ...s,
+        tasks: s.tasks.toSorted((a, b) => a.startDate.localeCompare(b.startDate)),
+      })),
+    }
+  }
+
   async function loadRoadmap(slug: string) {
     const { data } = await api.get<Roadmap>(`/roadmaps/${slug}`)
     if (!data) return
-    setRoadmap(data)
+    setRoadmap(sortRoadmapTasks(data))
     window.location.hash = '#' + slug
   }
 
@@ -240,7 +250,7 @@ export default function AppTeam() {
 
     sseManager.on('presence_updated', ({ users }) => setPresenceUsers(users))
     sseManager.on('init', (r) => {
-      setRoadmap(r)
+      setRoadmap(sortRoadmapTasks(r))
       setSseConnected(true)
     })
 
@@ -287,7 +297,14 @@ export default function AppTeam() {
           ? {
               ...prev,
               sections: prev.sections.map((s) =>
-                s.id === task.sectionId ? { ...s, tasks: [...s.tasks, task] } : s,
+                s.id === task.sectionId
+                  ? {
+                      ...s,
+                      tasks: [...s.tasks, task].toSorted((a, b) =>
+                        a.startDate.localeCompare(b.startDate),
+                      ),
+                    }
+                  : s,
               ),
             }
           : prev,
@@ -301,7 +318,12 @@ export default function AppTeam() {
               ...prev,
               sections: prev.sections.map((s) =>
                 s.id === task.sectionId
-                  ? { ...s, tasks: s.tasks.map((t) => (t.id === task.id ? task : t)) }
+                  ? {
+                      ...s,
+                      tasks: s.tasks
+                        .map((t) => (t.id === task.id ? task : t))
+                        .toSorted((a, b) => a.startDate.localeCompare(b.startDate)),
+                    }
                   : s,
               ),
             }
